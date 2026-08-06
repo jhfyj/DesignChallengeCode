@@ -1,0 +1,565 @@
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgb(56, 12, 50) 0%,
+      rgb(16, 3, 14) 26.442%,
+      rgb(0, 0, 0) 51.442%,
+      rgb(5, 15, 25) 75.962%,
+      rgb(23, 67, 108) 100%
+    );
+}
+
+.hint {
+  margin: 0;
+  font-family: 'Petit Formal Script', cursive;
+  font-size: 20px;
+  color: #fff;
+  text-align: center;
+}
+
+.hint--title {
+  font-size: 24px;
+  max-width: 280px;
+}
+
+/* .ticket-stage__hint uses inset:0 (left:0 + right:0) to fill its container;
+   once max-width caps it narrower than that, the left/right constraint is
+   over-specified and the box collapses against the left edge instead of
+   centering. margin:auto is the standard fix for that combination. */
+.ticket-stage__hint.hint--title {
+  margin: 0 auto;
+}
+
+/* ticket stage */
+
+.ticket-stage {
+  position: relative;
+}
+
+/* .ticket-frame is always position:fixed (see below) and centers itself in
+   the viewport independently, so it's no longer a flex-flow sibling that
+   this hints block and .close-btn can just sit next to. Both are instead
+   anchored directly to the viewport using the same 661px/vscale card-height
+   formula .ticket-frame itself uses to size its rest state -- one shared
+   formula instead of flex-flow adjacency, so it can't drift out of sync
+   with wherever the card actually ends up. */
+.ticket-stage__hints {
+  position: fixed;
+  left: 50%;
+  bottom: calc(50vh + (661px * var(--vscale) / 2) + 16px);
+  transform: translateX(-50%);
+  width: 320px;
+  height: 90px;
+}
+
+.ticket-stage__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.ticket-stage__hint.is-visible {
+  opacity: 1;
+}
+
+/* the idle "tap the card" hint pulses once it's faded in, to draw the eye
+   without shouting -- the "See you at the event!" caption shares this same
+   class but should stay put, hence :not(.hint--title) */
+.ticket-stage__hint.is-visible:not(.hint--title) {
+  animation: hint-pulse 2s ease-in-out 0.4s infinite;
+}
+
+/* anchored to the viewport bottom at a FIXED px distance (not a %, which
+   would drift wildly on tall vs. short viewports) -- this number is the
+   same ACTIVE_BOTTOM_RESERVE App.jsx budgets for when it computes the grown
+   card's max size, so the two can never drift out of sync and overlap */
+.drag-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 20%;
+  transform: translateX(-50%);
+  z-index: 1;
+  padding: 8px 20px;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.drag-hint.is-visible {
+  opacity: 1;
+  animation: hint-pulse 2.4s ease-in-out 0.3s infinite;
+}
+
+@keyframes hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* .ticket-frame is ALWAYS position:fixed, centered in the viewport by its
+   own top/left/transform -- for every stage, not just when grown. Switching
+   the `position` property itself between relative and fixed mid-transition
+   was the cause of the card visibly "wandering" instead of zooming straight
+   in: `position` cannot be animated, so the instant it flips, the browser
+   has to reinterpret every other animating property (transform, width,
+   height) in a brand new coordinate system partway through the transition,
+   which does not resolve to a straight line. Keeping `position` constant
+   the whole time means width/height/transform are the only things
+   changing, all within the same reference frame, so they interpolate
+   cleanly -- a direct zoom, no detour. */
+.ticket-frame {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(259px * var(--vscale));
+  height: calc(661px * var(--vscale));
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* grown sizes itself from --active-scale (computeActiveScale in App.jsx,
+   which is computed directly from the viewport and already guaranteed to
+   fit above the drag-hint reserve -- see ACTIVE_BOTTOM_RESERVE) and anchors
+   the QR code's own position within the card (--qr-anchor, computed from
+   the actual TicketCard.css coordinates) to the viewport's vertical center,
+   instead of the card's geometric center. That's what "zoom in on the QR"
+   means concretely: translate's Y percentage is relative to the element's
+   OWN height, so swapping -50% for -var(--qr-anchor) moves which point on
+   the card lands at the anchor, with no separate offset math needed. */
+.ticket-frame--grown {
+  width: calc(259px * var(--active-scale));
+  height: calc(661px * var(--active-scale));
+  transform: translate(-50%, calc(-1 * var(--qr-anchor)));
+  cursor: default;
+}
+
+/* on first mount the ticket starts a full viewport-height below its resting
+   spot -- fully off screen, not just partway down -- with no transition
+   (snapped there before the first paint), then the very next frame drops
+   this class so .ticket-frame's own transform transition slides it up into
+   place. vh (not a fixed px offset) guarantees it starts off screen on any
+   device height. This is a position-only move: width/height/scale never
+   change here, see the lazy useViewportScale() init in App.jsx that keeps
+   --vscale correct from the first render so nothing resizes mid-slide. */
+.ticket-frame--pre-enter {
+  transform: translate(-50%, -50%) translateY(100vh);
+  transition: none;
+}
+
+
+.ticket-frame:hover:not(.ticket-frame--grown):not(.ticket-frame--stacked) {
+  transform: translate(-50%, -50%) translateY(-12px);
+}
+
+.ticket-frame:active:not(.ticket-frame--grown):not(.ticket-frame--stacked) .torn {
+  transform: scale(calc(var(--vscale) * 0.98));
+}
+
+/* the ticket, split into two flush pieces at the perforation seam */
+
+.torn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 259px;
+  height: 661px;
+  transform: scale(var(--vscale));
+  transform-origin: top left;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ticket-frame--grown .torn {
+  transform: scale(var(--active-scale));
+}
+
+.ticket-slice {
+  position: absolute;
+  left: 0;
+  display: block;
+  width: 259px;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ticket-slice--hidden {
+  opacity: 0;
+}
+
+.ticket-slice .ticket-card {
+  position: absolute;
+  left: 0;
+}
+
+.ticket-slice--top {
+  top: 0;
+  height: 401px;
+  transform-origin: right bottom;
+}
+
+.ticket-slice--top .ticket-card {
+  top: 0;
+}
+
+.ticket-slice--bottom {
+  top: 401px;
+  height: 260px;
+  transform-origin: right top;
+  /* filter (not box-shadow) so the shadow isn't clipped away by this same
+     element's own overflow:hidden -- box-shadow paints inside that clip,
+     drop-shadow is applied to the already-clipped result and is free to
+     extend past its edges */
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+}
+
+.ticket-slice--bottom .ticket-card {
+  top: -401px;
+}
+
+/* resting state once torn: the two pieces sit already-separated and
+   overlapping, the QR stub in front of the taller header stub. Also the
+   drop-in target for the reassemble animation, so the pieces land already
+   tilted instead of falling in flush and snapping into place after. */
+
+.torn--reassemble .ticket-slice--top,
+.torn--stacked .ticket-slice--top {
+  transform: rotate(-3deg) translateX(-34px) translateY(30px);
+}
+
+.torn--reassemble .ticket-slice--bottom,
+.torn--stacked .ticket-slice--bottom {
+  transform: rotate(4deg) translateX(50px) translateY(-46px);
+  z-index: 2;
+}
+
+/* once resting, each piece lifts independently on hover -- they're separate
+   interactive targets (tap to inspect), not a single unit, so hovering one
+   must never move the other. */
+
+.torn--stacked .ticket-slice {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.torn--stacked .ticket-slice--top:hover {
+  transform: rotate(-3deg) translateX(-34px) translateY(0px);
+}
+
+.torn--stacked .ticket-slice--bottom:hover {
+  transform: rotate(4deg) translateX(50px) translateY(-68px);
+}
+
+.torn--tearing .ticket-slice--top,
+.torn--thanks .ticket-slice--top,
+.torn--thanksFade .ticket-slice--top,
+.torn--reassemblePrep .ticket-slice--top {
+  transform: translateY(-140vh);
+}
+
+.torn--tearing .ticket-slice--bottom,
+.torn--thanks .ticket-slice--bottom,
+.torn--thanksFade .ticket-slice--bottom {
+  transform: translateY(140vh);
+}
+
+.torn--reassemblePrep .ticket-slice--bottom {
+  transition: none;
+  transform: translateY(140vh);
+}
+
+.torn--reassemble .ticket-slice--bottom {
+  transition-delay: 0.15s;
+}
+
+/* perforation / tear line, sits at the seam between the two pieces */
+
+.perforation {
+  position: absolute;
+  left: 15px;
+  top: 389px;
+  width: 229px;
+  height: 24px;
+  transition: opacity 0.3s ease;
+}
+
+.torn--tearing .perforation,
+.torn--thanks .perforation,
+.torn--thanksFade .perforation,
+.torn--reassemblePrep .perforation,
+.torn--reassemble .perforation {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.perforation--active {
+  cursor: url('/cursor-scissors.svg') 12 12, pointer;
+  touch-action: none;
+}
+
+/* the dash line itself lives inside each paper piece, flush against its own
+   cut edge, instead of floating as one bridge between them -- so as the
+   pieces tilt apart while dragging, the line visibly tears open with the
+   paper instead of hanging unattached in the gap. */
+
+.perforation-half {
+  --reveal: 0%;
+  position: absolute;
+  left: 15px;
+  width: 229px;
+  height: 2px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent var(--reveal),
+      #000 var(--reveal),
+      #000 100%
+    ),
+    linear-gradient(
+      90deg,
+      #ff3b3b,
+      #ff9a3b,
+      #ffe23b,
+      #3bff6a,
+      #3bc7ff,
+      #7a3bff,
+      #ff3bd6,
+      #ff3b3b
+    );
+  -webkit-mask-image: repeating-linear-gradient(
+    90deg,
+    #000 0 6px,
+    transparent 6px 12px
+  );
+  mask-image: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 12px);
+}
+
+.perforation-half--top {
+  bottom: 0;
+}
+
+.perforation-half--bottom {
+  top: 0;
+}
+
+.perforation__glow {
+  position: absolute;
+  top: 50%;
+  left: -8%;
+  width: 40px;
+  height: 20px;
+  transform: translateY(-50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  filter: blur(1.5px);
+  pointer-events: none;
+  animation: perforation-sweep 1.8s ease-in-out infinite;
+}
+
+@keyframes perforation-sweep {
+  0% {
+    left: -8%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    /* `left` positions the glow's own LEFT edge -- at 100% that put the
+       whole 40px-wide glow past the line's right end instead of on it.
+       Subtracting its own width here lands its right edge exactly at the
+       line's end instead. */
+    left: calc(100% - 40px);
+    opacity: 0;
+  }
+}
+
+/* thanks message, overlaid independently of the ticket pieces */
+
+.thanks-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.thanks-overlay.is-visible {
+  opacity: 1;
+}
+
+.thanks-overlay.is-fading {
+  opacity: 0;
+}
+
+/* close / restart button, shown beneath the resting stacked ticket --
+   anchored to the viewport with the same formula as .ticket-stage__hints
+   above, for the same reason: .ticket-frame is fixed-positioned and no
+   longer a flex-flow sibling this can just sit below */
+
+.close-btn {
+  position: fixed;
+  left: 50%;
+  top: calc(50vh + (661px * var(--vscale) / 2) + 24px);
+  transform: translateX(-50%);
+  height: 44px;
+  padding: 0 28px;
+  border: 1px solid #ffffff43;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff9d;
+  border-radius: 54px;
+  font-family: 'Khula', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    background 0.15s ease;
+}
+
+.close-btn.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* letter-spacing adds space after EVERY character, including the last one
+   -- that trailing space is invisible but still counts toward the text's
+   box width, so centering it (via the parent's justify-content:center)
+   centers that wider invisible box instead of the visible glyphs, shifting
+   them left of true center. Canceling the trailing space with a matching
+   negative margin here fixes that without touching the letter-spacing
+   between characters, which is what actually needs to stay. */
+.close-btn__label {
+  margin-top: 0.24em;
+}
+
+/* backdrop blur behind a focused (inspected) piece */
+
+.inspect-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.inspect-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* the focused piece itself, rendered as a sibling of the backdrop so it
+   isn't trapped inside .ticket-frame's own stacking context (its scale
+   transform creates one, which would otherwise sit the piece behind the
+   blurred backdrop instead of in front of it) */
+
+.inspect-popup {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.88);
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.inspect-popup.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.ticket-slice--popup {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform-origin: center center !important;
+  transform: scale(calc(var(--vscale) * 1.35));
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+  cursor: zoom-out;
+  transition: none;
+}
+
+/* one-time tap-anywhere gate shown before anything else -- a real user
+   gesture landing on this button is what unlocks the AudioContext (browsers
+   block audio before any interaction), so the entrance slide + whoosh are
+   deferred until this tap instead of firing on raw page load, see
+   handleBegin in App.jsx */
+.enter-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: 'Petit Formal Script', cursive;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #fff;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+  animation: hint-pulse 2.2s ease-in-out 0.4s infinite;
+}
+
+.enter-gate--dismissed {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}

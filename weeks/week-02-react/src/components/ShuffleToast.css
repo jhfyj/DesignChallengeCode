@@ -1,0 +1,52 @@
+.shuffle-toast {
+  position: fixed;
+  top: 20px;
+  /* Control panel is 300px wide — sit just to the left of it, not flush
+     against the browser's own right edge. */
+  right: 320px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px 10px 16px;
+  box-shadow: var(--shadow-elevated);
+  font-family: system-ui, sans-serif;
+}
+
+.shuffle-toast__label {
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+}
+
+.shuffle-toast__undo {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shuffle-toast__undo:hover {
+  color: var(--color-accent-hover);
+}
+
+.shuffle-toast__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.shuffle-toast__close:hover {
+  color: var(--color-text-primary);
+}

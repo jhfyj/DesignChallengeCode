@@ -1,0 +1,435 @@
+.control-panel {
+  position: relative;
+  width: 300px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-panel);
+  border-left: 1px solid var(--color-border);
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+/* Now the first item inside control-panel__body (not a sibling of it), so the
+   native dialkit toolbar scrolls away with everything else instead of
+   staying pinned. */
+.control-panel__native {
+  flex-shrink: 0;
+}
+
+/* dialkit's own native panel header ships a margin-bottom baked into its
+   styles.css on top of its border-bottom divider; the margin is zeroed here
+   so the gap into our custom Shuffle button below is controlled entirely by
+   control-panel__body's own gap (matching every other gap in the panel)
+   instead of stacking with dialkit's built-in spacing. The divider line
+   itself is kept. */
+.control-panel__native .dialkit-folder-header.dialkit-panel-header {
+  margin-bottom: 0;
+}
+
+/* dialkit-panel-inner also ships its own 12px left/right padding, which sat
+   on top of control-panel__body's 16px padding and made the native toolbar
+   12px more inset than every custom row below it. Zeroed here so the native
+   toolbar lines up flush with everything else. */
+.control-panel__native .dialkit-panel-inner {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.control-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 40px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Spacing between top-level items is margin-based rather than flex `gap` so
+   folder-to-folder transitions can opt out of it below — a `gap` value adds
+   on top of the divider line's own (symmetric) padding, which is what was
+   pushing that line up near the top of its whitespace instead of centering
+   it. Every other pairing (Shuffle -> page size -> tab bar -> first folder)
+   still gets this plain, uniform spacing. */
+.control-panel__body > * + * {
+  margin-top: 14px;
+}
+
+.control-panel__body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shuffle + Style Mode side by side — the pairing itself is what tells
+   people Style Mode governs what Shuffle draws from, instead of burying it
+   in its own Design > Style folder disconnected from the button it affects. */
+.control-panel__shuffle-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.control-panel__shuffle-row .action-button {
+  flex: 1;
+  min-width: 0;
+}
+
+.control-panel__tabbar {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  background: var(--color-bg-sunken);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.control-panel__tab {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+}
+
+.control-panel__tab.is-active {
+  background: var(--color-bg-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.content-section__placeholder {
+  padding: 24px 4px;
+  color: var(--color-text-tertiary);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Text Library — full-panel overlay modeled on Figma's native "Text styles"
+   panel, minus its search bar (not needed with this small a style set). */
+
+.text-library {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-panel);
+}
+
+.text-library__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.text-library__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-icon-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.text-library__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 16px 24px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.text-library__list::-webkit-scrollbar {
+  display: none;
+}
+
+.text-library__group + .text-library__group {
+  margin-top: 16px;
+}
+
+.text-library__group-label {
+  padding: 8px 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.text-style-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.text-style-row:hover {
+  background: var(--color-bg-surface);
+}
+
+.text-style-row__glyph {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.text-style-row__size {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+}
+
+/* Color Library — same overlay shell as Text Library, opened by clicking the
+   fanned color stack in Branding > Colors. Custom is the user's own,
+   free-length list (starts empty); Palettes browses a full, categorized
+   token system (colorPalettes.js) that either adds a color to Custom
+   (hex categories) or copies its value (Overlay/Gradient, not flat colors). */
+
+.color-library-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.color-library-row:hover {
+  background: var(--color-bg-surface);
+}
+
+.color-library-row__swatch {
+  display: block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-library-row__hex {
+  flex: 1;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.color-library-row__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.color-library-row__remove:hover {
+  color: var(--color-text-primary);
+}
+
+.color-library-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed var(--color-border-dashed);
+  border-radius: 8px;
+  background: none;
+  color: var(--color-icon-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.color-library-add:hover {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+}
+
+.color-library-add__input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.color-library-palette-group + .color-library-palette-group {
+  margin-top: 4px;
+}
+
+.color-library-palette {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+
+.color-library-palette__chevron {
+  flex-shrink: 0;
+  color: var(--color-icon-secondary);
+  transition: transform 0.15s ease;
+}
+
+.color-library-palette__chevron:not(.is-open) {
+  transform: rotate(-90deg);
+}
+
+.color-library-palette__swatches {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.color-library-palette__swatch {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--color-bg-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.color-library-palette__swatch + .color-library-palette__swatch {
+  margin-left: -8px;
+}
+
+.color-library-palette__name {
+  flex: 1;
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+}
+
+.color-library-palette__categories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 4px 12px 32px;
+}
+
+.color-library-category__label {
+  padding: 12px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+.color-library-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Two separately-clickable targets per chip: the swatch adds the color to
+   Custom (hex categories only), the label underneath always copies the
+   value — so "click the swatch" and "click the title" do different,
+   discoverable things instead of overloading a single click/double-click. */
+.color-library-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 56px;
+}
+
+.color-library-chip__swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--overlay-border-subtle);
+  border-radius: 8px;
+  padding: 0;
+  background: none;
+}
+
+button.color-library-chip__swatch {
+  cursor: pointer;
+}
+
+button.color-library-chip__swatch:hover {
+  outline: 2px solid var(--color-text-tertiary);
+  outline-offset: 1px;
+}
+
+/* Dark circular badge (not just a plain icon) so the "add" hint stays
+   legible regardless of the swatch's own color — a light swatch (White,
+   Selection, Gray 100...) would otherwise swallow a plain light-colored
+   icon. Hidden until the swatch itself is hovered. */
+.color-library-chip__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--overlay-badge-scrim);
+  color: var(--white);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+button.color-library-chip__swatch:hover .color-library-chip__icon {
+  opacity: 1;
+}
+
+.color-library-chip__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.color-library-chip__label:hover {
+  color: var(--color-text-primary);
+}

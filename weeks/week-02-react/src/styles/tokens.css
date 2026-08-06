@@ -1,0 +1,91 @@
+/* Design tokens — the single source of truth for every color used in the
+   app's UI chrome (control panel, canvas backdrop, popovers, toasts). No
+   component CSS should write a literal hex/rgba color of its own; it
+   references one of the semantic custom properties below instead, so
+   changing a color here is the only place that ever needs to change.
+
+   Two layers, same as most real design systems:
+   1. Primitives — the raw palette, named by hue + step. Never referenced
+      directly from component CSS.
+   2. Semantic tokens — named by ROLE ("surface", "text-secondary", "accent"),
+      each aliasing a primitive. Component CSS only ever uses these, so a
+      role can be repointed at a different primitive without hunting down
+      every place that role appears.
+
+   This whole app is dark-only (see index.css's color-scheme: dark) — no
+   light-theme block, unlike the canvas's own colors (colorPalettes.js),
+   which are the user's design content, not app chrome, and stay
+   independent of this file. */
+
+:root {
+  /* ---- Primitives: neutral ramp, darkest to lightest ---- */
+  --gray-1000: #111111;
+  --gray-950: #171717;
+  --gray-925: #1a1a1c;
+  --gray-900: #212121;
+  --gray-850: #2c2c2e;
+  --gray-800: #333336;
+  --gray-750: #3a3a3d;
+  --gray-700: #45454a;
+  --gray-600: #6b6b73;
+  --gray-575: #6f6f6f;
+  --gray-550: #808086;
+  --gray-525: #8b8b8b;
+  --gray-500: #9a9aa2;
+  --gray-350: #c6c6c6;
+  --gray-300: #d4d4d8;
+  --gray-250: #e4e4e7;
+  --gray-100: #f4f4f5;
+  --white: #ffffff;
+
+  /* ---- Primitives: accent ramp (pink) ---- */
+  --pink-950: #3a2a30;
+  --pink-400: #f472b6;
+  --pink-500: #ec4899;
+
+  /* ---- Semantic: backgrounds/surfaces ---- */
+  --color-bg-app: var(--gray-1000); /* html/body shell, behind everything */
+  --color-bg-canvas-region: var(--gray-950); /* backdrop the artboard floats on */
+  --color-bg-panel: var(--gray-900); /* control panel, toast, full-panel overlays */
+  --color-bg-sunken: var(--gray-950); /* inset tracks: tab bar, toggle/alignment groups, edit-input */
+  --color-bg-popover: var(--gray-925); /* select + date-picker popovers */
+  --color-bg-surface: var(--gray-850); /* default interactive row/button */
+  --color-bg-surface-hover: var(--gray-750); /* hover/active state of a surface row */
+  --color-bg-accent-hover: var(--pink-950); /* accent action button on hover */
+  --color-surface-inverse: var(--gray-100); /* light chip on the dark UI — selected date, asset badge */
+
+  /* ---- Semantic: borders ---- */
+  --color-border: var(--gray-800);
+  --color-border-dashed: var(--gray-700);
+
+  /* ---- Semantic: text & icons ---- */
+  --color-text-primary: var(--gray-100);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-600);
+  --color-text-muted: var(--gray-525);
+  --color-text-subtle: var(--gray-300);
+  --color-text-placeholder: var(--gray-550);
+  --color-text-on-surface-inverse: var(--gray-950); /* pairs with --color-surface-inverse */
+  --color-icon-secondary: var(--gray-350);
+  --color-icon-disabled: var(--gray-575);
+
+  /* ---- Semantic: accent ---- */
+  --color-accent: var(--pink-500);
+  --color-accent-hover: var(--pink-400);
+
+  /* ---- Semantic: the canvas's own default surface (the generated design's
+     literal default background, not app chrome — kept as its own token
+     rather than reusing a UI role that happens to share the same value) ---- */
+  --color-canvas-default-bg: var(--white);
+  --color-canvas-placeholder: var(--gray-250);
+
+  /* ---- Semantic: elevation & overlays ---- */
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-elevated-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --overlay-border-subtle: rgba(255, 255, 255, 0.12);
+  --overlay-tick: rgba(255, 255, 255, 0.18);
+  --overlay-grid-line: rgba(255, 255, 255, 0.5);
+  --overlay-caption-scrim: rgba(255, 255, 255, 0.85);
+  --overlay-badge-scrim: rgba(0, 0, 0, 0.55);
+}

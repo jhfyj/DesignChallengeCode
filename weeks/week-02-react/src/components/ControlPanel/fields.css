@@ -1,0 +1,1070 @@
+/* Selected-element panel */
+
+.selected-element-panel__back {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  /* No align-self: flex-start — stretches to the column's full width (the
+     parent is flex-direction: column) so the divider below spans the whole
+     panel instead of only the "← Back" text's own width. */
+  background: none;
+  border: none;
+  color: var(--color-icon-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  /* This panel replaces control-panel__body's content entirely (no native
+     dialkit toolbar above it, unlike the Design/Content/Assets tabs), so
+     Back sits flush against control-panel__body's zero top padding without
+     its own top padding to give it breathing room. Bottom padding + border
+     forms a divider separating Back from the title below. */
+  padding: 16px 0 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.selected-element-panel__back:hover {
+  color: var(--color-text-primary);
+}
+
+.selected-element-panel__title {
+  flex-shrink: 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.selected-element-panel__section-label {
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding: 2px 2px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.details-row {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.details-row .field-row {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Single color row — clicking the swatch opens a small Brand/Custom
+   popover (below) instead of jumping straight to the native OS color
+   picker, so picking one of the design's own brand colors doesn't require
+   rebuilding it from scratch every time. */
+.field-row.single-color-row {
+  overflow: visible;
+}
+
+.single-color-row__swatch {
+  flex-shrink: 0;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 8px;
+}
+
+.single-color-row__reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.single-color-row__reset:hover {
+  color: var(--color-text-primary);
+}
+
+.single-color-row__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--color-bg-popover);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.single-color-row__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.single-color-row__group-label {
+  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.single-color-row__brand-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.single-color-row__brand-swatch {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.single-color-row__brand-swatch.is-selected {
+  border-color: var(--color-accent);
+}
+
+/* Custom tab — an in-house picker (react-colorful) rather than the native
+   <input type="color">, which opens as its own floating OS/browser dialog
+   outside our layout instead of sitting inside this popover. */
+.single-color-row__custom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.single-color-row__picker.react-colorful {
+  width: 100%;
+  height: 130px;
+}
+
+.single-color-row__picker .react-colorful__saturation {
+  border-radius: 8px;
+  border-bottom: none;
+  margin-bottom: 8px;
+}
+
+.single-color-row__picker .react-colorful__hue {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.single-color-row__picker .react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+}
+
+.single-color-row__custom-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.single-color-row__eyedropper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-bg-sunken);
+  color: var(--color-icon-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.single-color-row__eyedropper:hover {
+  color: var(--color-text-primary);
+}
+
+.single-color-row__custom-preview {
+  flex-shrink: 0;
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.single-color-row__rgb {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+}
+
+.single-color-row__rgb-field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.single-color-row__rgb-field input {
+  width: 100%;
+  background: var(--color-bg-sunken);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 2px;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.single-color-row__rgb-field input::-webkit-outer-spin-button,
+.single-color-row__rgb-field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.single-color-row__rgb-field span {
+  color: var(--color-text-tertiary);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+/* Alignment row (selected element's horizontal/vertical align within its box) */
+
+.field-row.alignment-row {
+  padding: 0;
+  background: none;
+  gap: 4px;
+}
+
+.alignment-row__group {
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  gap: 2px;
+  background: var(--color-bg-sunken);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.alignment-row__group button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.alignment-row__group button.is-active {
+  background: var(--color-bg-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.field-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  overflow: hidden;
+}
+
+/* Date picker pops its calendar open below the row itself (position:
+   absolute, anchored off this row's own position: relative) — the base
+   .field-row's overflow: hidden (needed to clip other rows' fill bars) was
+   clipping that popover out of existence before a user could ever see or
+   click it. */
+.field-row.date-picker {
+  overflow: visible;
+}
+
+.field-row__label {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.field-row__value {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-row__icon {
+  margin-right: 8px;
+  opacity: 0.6;
+}
+
+.field-row__input {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.field-row__input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.field-row__input--right {
+  text-align: right;
+}
+
+.field-row__count {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-secondary);
+  min-width: 1.2em;
+  text-align: right;
+}
+
+/* Textarea (Description) */
+
+.field-row--textarea {
+  height: 110px;
+  align-items: flex-start;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.field-row__textarea {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.field-row__textarea::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* Nested rows (belong under a Keynote/Speakers-type parent) */
+
+.nested-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nested-row__icon {
+  flex-shrink: 0;
+  color: var(--color-icon-disabled); /* Carbon g100 icon-disabled */
+}
+
+.nested-row__icon--flip {
+  transform: scaleX(-1);
+}
+
+.nested-row__icon-btn {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nested-row__icon-btn .nested-row__icon {
+  transition: transform 0.15s ease;
+}
+
+.nested-row .field-row {
+  flex: 1;
+}
+
+/* Wraps each panel's top-level Folders (DesignPanel/ContentPanel/AssetsPanel)
+   as a single flex column — the one place to change spacing BETWEEN
+   sections without touching a folder's own internal header/body padding.
+   control-panel__body's own `> * + *` margin-rule still spaces this wrapper
+   itself from the toolbar/tab bar above it; this gap only governs what's
+   inside it. */
+.control-panel__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Folders */
+
+.content-folder {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-folder__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0 0 0;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-shrink: 0;
+  /* This header's own breathing room around its label/chevron and the
+     divider line above it — spacing BETWEEN one section and the next is now
+     controlled entirely by .control-panel__sections's gap, not by this
+     padding, so top/bottom no longer need to match each other. */
+  padding: 16px 4px 4px 4px;
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.folder-header--nested {
+  border-top: none;
+  /* Full override, not just padding-top — nested folders have no divider
+     line to center, so they use the same compact padding as an ordinary
+     row rather than the top-level divider's larger, symmetric 14px. */
+  padding: 6px 4px;
+}
+
+.folder-header__chevron {
+  color: var(--color-icon-secondary); /* Carbon g100 icon-secondary */
+  transition: transform 0.15s ease;
+}
+
+.folder-header__chevron.is-open {
+  transform: rotate(0deg);
+}
+
+.folder-header__chevron:not(.is-open) {
+  transform: rotate(-90deg);
+}
+
+/* Toggle */
+
+.toggle-row__buttons {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  background: var(--color-bg-sunken);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.toggle-row__buttons button {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-row__buttons button.is-active {
+  background: var(--color-bg-surface-hover);
+  color: var(--color-text-primary);
+}
+
+/* Select — a custom popover (not a native <select>) since the native
+   option-list popup can't be themed cross-browser and was falling back to
+   default OS/browser chrome. Needs the same overflow: visible escape hatch
+   as .field-row.date-picker below, for the same reason. */
+
+.field-row.select-row {
+  overflow: visible;
+}
+
+.select-row__trigger {
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.select-row__trigger.select-row__display--flush {
+  width: 100%;
+  justify-content: space-between;
+  margin-left: 0;
+  color: var(--color-text-primary);
+}
+
+.select-row__chevron {
+  color: var(--color-icon-secondary); /* Carbon g100 icon-secondary */
+  flex-shrink: 0;
+}
+
+.select-row__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--color-bg-popover);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.select-row__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.select-row__option:hover {
+  background: var(--color-bg-surface);
+}
+
+.select-row__option.is-selected {
+  color: var(--white);
+}
+
+.select-row__option svg {
+  flex-shrink: 0;
+  color: var(--white);
+}
+
+/* Compact — the Style Mode select sits directly beside the Shuffle button
+   (see ControlPanel.jsx's shuffle row) instead of in its own full-width
+   Folder section, so the pairing itself signals "this is what Shuffle
+   draws from" without needing a separate label. */
+.select-row--compact {
+  flex-shrink: 0;
+  width: 80px;
+  height: fill;
+  padding: 0 12px;
+  font-size: 0.72rem;
+}
+
+/* Slider (draggable rows; fill bar is optional via SliderRow's showFill prop) */
+
+.slider-row__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-surface-hover);
+  pointer-events: none;
+}
+
+.slider-row__value {
+  position: relative;
+  z-index: 3;
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  /* Purely visual — sits on top of .slider-row__input (z-index: 2) so the
+     number is legible over the invisible range input beneath it, but a drag
+     started right on top of the number needs to reach that input same as
+     anywhere else on the row, not get swallowed here. Double-click-to-edit is
+     wired to the input itself (see SliderRow.jsx) instead of this span. */
+  pointer-events: none;
+}
+
+/* Double-click the value to type an exact number instead of dragging —
+   sits in the same spot as .slider-row__value but needs a higher z-index
+   than .slider-row__input's full-row drag overlay so clicks/typing land on
+   the text field instead of falling through to the slider drag. */
+.slider-row__edit-input {
+  position: relative;
+  z-index: 3;
+  margin-left: auto;
+  width: 52px;
+  background: var(--color-bg-sunken);
+  border: none;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.slider-row__edit-input::-webkit-outer-spin-button,
+.slider-row__edit-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.slider-row__input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Tick marks for stepped sliders (see SliderRow.jsx's hashMarkPositions,
+   ported from dialkit's own Slider.svelte) — sits above the fill bar
+   (z-index: auto) but below the input/value layers so it never blocks
+   dragging. */
+.slider-row__hashmarks {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.slider-row__hashmark {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  background: var(--overlay-tick);
+}
+
+/* Action button (Shuffle / Download) */
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 8px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  border: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.action-button:hover {
+  background: var(--color-bg-surface-hover);
+}
+
+.action-button:active {
+  transform: scale(0.98);
+}
+
+.action-button--accent {
+  color: var(--color-accent);
+}
+
+.action-button--accent:hover {
+  background: var(--color-bg-accent-hover);
+}
+
+/* Date picker */
+
+.date-picker__trigger {
+  width: 100%;
+  justify-content: space-between;
+  margin-left: 0;
+  color: var(--color-text-primary);
+}
+
+.date-picker__placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.date-picker__chevron {
+  flex-shrink: 0;
+  color: var(--color-icon-secondary); /* Carbon g100 icon-secondary */
+}
+
+.date-picker__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--color-bg-popover);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.date-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+}
+
+.date-picker__header button {
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.date-picker__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.date-picker__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.date-picker__day {
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  padding: 6px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.date-picker__day:hover {
+  background: var(--color-border);
+}
+
+.date-picker__day.is-selected {
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-surface-inverse);
+}
+
+/* Image upload */
+
+.image-upload__input {
+  display: none;
+}
+
+.image-upload__button {
+  flex-direction: row-reverse;
+}
+
+.image-upload__chip {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.image-upload__thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.image-upload__name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.image-upload__remove {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Image gallery (Layout > Image) — freeform "Add" list, unlike the single
+   Background Image / Speaker slots above. */
+
+.image-gallery__header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.image-gallery__add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg-surface);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.image-gallery__row {
+  gap: 8px;
+}
+
+.image-gallery__remove {
+  margin-left: auto;
+}
+
+/* Time range (Start Time — End Time, side by side) */
+
+.time-range-row {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.time-range-row__field {
+  flex: 1;
+  min-width: 0;
+}
+
+.time-range-row__dash {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+/* Speaker accordion row */
+
+.speaker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.speaker-row__chevron {
+  color: var(--color-icon-secondary); /* Carbon g100 icon-secondary — this is a chevron, not a return icon, despite sharing the nested-row slot */
+}
+
+.speaker-row__chevron.is-open {
+  transform: rotate(0deg);
+}
+
+.speaker-row__chevron:not(.is-open) {
+  transform: rotate(-90deg);
+}
+
+.speaker-row__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Color row (Branding > Colors) — swatches are half-overlapped into a single
+   fanned stack; clicking the stack opens the Color Library (see
+   ColorLibrary.jsx) rather than editing a color directly. */
+
+.color-row__stack {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.color-row__stack:hover {
+  transform: translateY(-2px);
+}
+
+.color-row__swatch {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid var(--color-bg-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.color-row__swatch + .color-row__swatch {
+  margin-left: -12px;
+}
+
+.color-row__input {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Button row (Branding > Text / Text Library) */
+
+.button-row__btn {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  background: var(--color-bg-surface-hover);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* Asset grid (Assets folder) */
+
+.asset-grid__section-label {
+  flex-shrink: 0;
+  margin-top: 10px;
+  padding: 2px 2px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.asset-grid {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.asset-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-surface-hover);
+  overflow: hidden;
+}
+
+.asset-card__thumb {
+  position: relative;
+  aspect-ratio: 1;
+  margin: 1px 1px 0;
+  border-radius: 9px;
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.asset-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.asset-card__glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.asset-card__name {
+  padding: 8px 8px;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-card__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-surface-inverse);
+  cursor: pointer;
+}
+

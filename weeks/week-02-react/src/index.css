@@ -1,0 +1,17 @@
+@import './styles/tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--color-bg-app);
+  color-scheme: dark;
+}
+
+#root {
+  height: 100%;
+}

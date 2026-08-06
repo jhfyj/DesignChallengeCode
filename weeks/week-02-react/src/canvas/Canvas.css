@@ -1,0 +1,240 @@
+.canvas-region {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-canvas-region);
+}
+
+.canvas-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.frame-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+}
+
+.frame-label__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.frame-label__toggle:hover {
+  color: var(--color-text-primary);
+}
+
+.artboard-viewport {
+  overflow: hidden;
+  box-shadow: var(--shadow-elevated-lg);
+}
+
+.artboard-scaler {
+  transform-origin: top left;
+}
+
+.artboard {
+  position: relative;
+  display: grid;
+  background: var(--color-canvas-default-bg);
+  box-sizing: content-box;
+}
+
+/* Canvas background pattern/gradient overlay (Design > Canvas) — a sibling
+   layered above the background image (see Artboard.jsx) rather than a CSS
+   class on .artboard itself, since a background-image on .artboard's own box
+   would paint *below* the background image child, not above it. Its actual
+   background-image/gradient + opacity come from Artboard.jsx's patternStyle
+   (patternSize/patternOpacity make static CSS values insufficient here). */
+.artboard-pattern-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* mix-blend-mode: difference inverts against whatever's underneath, so the
+   guide lines stay visible on a black/dark canvas background instead of
+   vanishing (a flat rgba(0,0,0,...) border is invisible against black). */
+.grid-overlay__cell {
+  border: 1px solid var(--overlay-grid-line);
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.canvas-element {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  line-height: 1.15;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* Text no longer auto-shrinks to stay on one line — when it's too wide for
+     the box it wraps onto more lines instead (long unbreakable words break
+     mid-word rather than overflowing the box). */
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Swiss mode's grid is built on whole words landing in their own cells —
+   a word split mid-character (Free mode's break-word fallback) reads as
+   broken there in a way it doesn't in Free's looser layout. Words wrap onto
+   the next line as a unit instead of fracturing. The box still constrains
+   (clips) whatever doesn't fit — shuffleEngine.js's placeTextFitted sizes
+   each box to hug its widest word so that's rare from a shuffle, and a user
+   who narrows a box by hand past that point now has the corner resize
+   handles (see SelectionOverlay.jsx) to scale the text back down to fit
+   instead of the box silently growing to accommodate it. */
+.canvas-element.is-swiss {
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.canvas-element img {
+  -webkit-user-drag: none;
+}
+
+.canvas-element.is-selected {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.canvas-element--title,
+.canvas-element--subtitle {
+  font-weight: 700;
+}
+
+.canvas-element--body {
+  font-weight: 400;
+}
+
+.canvas-element--accent {
+  font-weight: 600;
+}
+
+.canvas-element--image-hero,
+.canvas-element--image-card {
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-canvas-placeholder);
+}
+
+/* Asset chips (Assets tab items placed on the canvas) — unlike photo
+   elements, a bare logo/glyph mark shouldn't sit on a filled placeholder
+   box, so no background here. */
+.canvas-element--asset {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.canvas-element__glyph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  text-align: center;
+}
+
+.canvas-element__glyph--text {
+  padding: 8px;
+  font-size: 14px;
+  font-family: 'Figtree', sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canvas-element__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.canvas-element--image-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Selection overlay: shares the same grid-row/grid-column as the selected
+   element (so it lines up automatically via CSS Grid), and only its handle
+   buttons are interactive — the container itself is click-through so the
+   underlying element still receives move-drag pointerdowns. */
+.selection-overlay {
+  position: relative;
+  pointer-events: none;
+}
+
+.selection-overlay__handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  pointer-events: auto;
+  padding: 0;
+}
+
+/* Corners: centered on each corner point, diagonal resize cursor. */
+.selection-overlay__handle--nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.selection-overlay__handle--ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.selection-overlay__handle--sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.selection-overlay__handle--se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+/* Edges: centered on the midpoint of each side, single-axis resize cursor. */
+.selection-overlay__handle--n { left: 50%; top: -7px; transform: translateX(-50%); cursor: ns-resize; }
+.selection-overlay__handle--s { left: 50%; bottom: -7px; transform: translateX(-50%); cursor: ns-resize; }
+.selection-overlay__handle--e { right: -7px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.selection-overlay__handle--w { left: -7px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+.selection-overlay__rotate {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  transform: translateX(-50%);
+  cursor: grab;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.canvas-element__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 6px;
+  background: var(--overlay-caption-scrim);
+  font-family: 'Figtree', sans-serif;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
