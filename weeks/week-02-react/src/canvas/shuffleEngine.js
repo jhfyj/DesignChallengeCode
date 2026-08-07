@@ -3,7 +3,7 @@ import {
   READABLE_FLOOR, DEFAULT_HEADER_CEILING,
 } from './placementEngine.js'
 import { FONT_FAMILIES, FONT_WEIGHT_BY_ROLE, SWISS_FONT_FAMILIES } from './fieldSelectors.js'
-import { rankSwatchesByContrast, ensureColors } from './colorContrast.js'
+import { rankSwatchesByContrast, readableSwatches, ensureColors } from './colorContrast.js'
 import { allSignatureColors, paletteByName, previewSwatches, applyPaletteOverrides } from './colorPalettes.js'
 import { estimateTextBlockHeight, widestWordWidth } from './textMeasure.js'
 import { LOCKED_ASSETS } from '../components/ControlPanel/panels/AssetsPanel.jsx'
@@ -354,7 +354,15 @@ function shuffleAssets(prevPlacements, grid, occupancy) {
 
   for (const key of Object.keys(prevPlacements)) {
     const p = prevPlacements[key]
-    if (!p.isAsset || !key.startsWith('upload-')) continue
+    if (!p.isAsset) continue
+    // A locked asset (upload or manually-placed library item) keeps its
+    // exact spot across a shuffle — same rule as locked content fields
+    // below, its cells are already reserved in `occupancy` up front.
+    if (p.locked) {
+      next[key] = { ...p }
+      continue
+    }
+    if (!key.startsWith('upload-')) continue
     const placed = placeElement(occupancy, workingGrid, 'asset', { allowGrow: false })
     workingGrid = placed.grid
     next[key] = { ...p, row: placed.row, col: placed.col, colSpan: placed.colSpan, rowSpan: placed.rowSpan, rotation: pickRotation(null), manual: true }
@@ -382,6 +390,13 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
   const workingColors = styleMode === 'Swiss' ? previewSwatches(swissPalette, 3) : ensureColors(withPaletteFlavor)
   const newCanvasColor = pickBackgroundColor(workingColors, styleMode)
   const ranked = rankSwatchesByContrast(workingColors, newCanvasColor)
+  // Swiss mode's palette is only 3 swatches (white/near-black/accent), and
+  // the canvas background is picked from that same light/dark pair — so
+  // without this, the tier-2 (lowest-contrast) pick below regularly lands
+  // body/accent text on a swatch that's practically the same color as the
+  // canvas. Filtered once here so every tier below only ever sees swatches
+  // that actually read against this shuffle's background.
+  const readableRanked = readableSwatches(workingColors, ranked, newCanvasColor)
 
   const newCanvasPattern = pickCanvasPattern(styleMode)
   const newPatternSize = pickPatternSize()
@@ -395,6 +410,15 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
 
   let workingGrid = baseGrid
   const occupancy = new Set()
+  // Locked elements (any role, including assets/uploads — see shuffleAssets)
+  // keep their exact spot across a shuffle instead of being rerolled; every
+  // other element must place around them, never on top, so their cells are
+  // reserved before anything else — including the info-group's own block
+  // reservation just below — gets a chance to land there.
+  for (const key of Object.keys(placements)) {
+    const p = placements[key]
+    if (p.locked) markOccupied(occupancy, p.row, p.col, p.rowSpan, p.colSpan)
+  }
   const next = {}
   const placedTextBlocks = []
   const pairedKeys = new Set()
@@ -428,6 +452,17 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
   for (const field of [...headerFields, ...infoFields, ...otherFields]) {
     const prev = placements[field.key] || {}
 
+    if (prev.locked) {
+      next[field.key] = { ...prev }
+      if (prev.role === 'title' || prev.role === 'subtitle') {
+        headerSizes.push(prev.fontSizeOverride ?? prev.fontSize)
+        if (prev.role === 'title') {
+          titleAnchor = { col: prev.col, colSpan: prev.colSpan, row: prev.row, rowSpan: prev.rowSpan }
+        }
+      }
+      continue
+    }
+
     if (field.group === 'info') {
       const spec = infoSpecs.find((s) => s.key === field.key)
       const placed = infoSlots[field.key]
@@ -439,7 +474,7 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
         rotation: 0, manual: true,
         alignH: pickAlignH(), alignV: pickAlignV(),
         fontFamily: spec.fontFamily, fontWeight: prev.fontWeight ?? null,
-        colorOverride: workingColors[pickInfoSwatch(ranked)],
+        colorOverride: workingColors[pickInfoSwatch(readableRanked)],
         fillMode: 'Fill Width/Height', imageScale: 100,
       }
       continue
@@ -476,7 +511,7 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
         rotation: pickTextRotation(), manual: true,
         alignH: pickAlignH(), alignV: pickAlignV(),
         fontFamily, fontWeight: prev.fontWeight ?? null,
-        colorOverride: workingColors[pickTieredSwatch(tier, ranked)],
+        colorOverride: workingColors[pickTieredSwatch(tier, readableRanked)],
         fillMode: 'Fill Width/Height', imageScale: 100,
       }
       continue
@@ -507,7 +542,7 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
         rotation: field.role === 'body' ? 0 : pickTextRotation(), manual: true,
         alignH: pickAlignH(), alignV,
         fontFamily, fontWeight: prev.fontWeight ?? null,
-        colorOverride: workingColors[pickTieredSwatch(2, ranked)],
+        colorOverride: workingColors[pickTieredSwatch(2, readableRanked)],
         fillMode: 'Fill Width/Height', imageScale: 100,
       }
       placedTextBlocks.push({

@@ -47,6 +47,25 @@ export function rankSwatchesByContrast(colors, backgroundHex) {
     .map((entry) => entry.index)
 }
 
+// A swatch below this contrast ratio against the background reads as
+// invisible, not just "quiet" — e.g. a near-black swatch on a near-black
+// background, or the exact same white as the canvas.
+const MIN_READABLE_CONTRAST = 2.2
+
+// Narrows an already-ranked index list (rankSwatchesByContrast's output) down
+// to the swatches that are actually visible against `backgroundHex`. Small,
+// fixed palettes (Swiss mode's white/near-black/accent triad) commonly
+// contain a swatch that's nearly identical to whatever the shuffle just
+// picked as the canvas color — without this filter, shuffleEngine.js's
+// low-contrast-leaning tiers (body/accent text) can land squarely on it.
+// Falls back to the single highest-contrast swatch if every swatch fails the
+// floor (only reachable with a degenerate 1-2 color palette), so callers
+// always get at least one usable index.
+export function readableSwatches(colors, ranked, backgroundHex, minRatio = MIN_READABLE_CONTRAST) {
+  const filtered = ranked.filter((i) => contrastRatio(colors[i], backgroundHex) >= minRatio)
+  return filtered.length ? filtered : [ranked[0]]
+}
+
 // The Custom section of the Color Library (ColorLibrary.jsx) starts empty and
 // is entirely user-managed, so shuffle/canvas rendering needs something to
 // fall back to whenever it's empty rather than breaking.

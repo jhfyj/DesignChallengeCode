@@ -187,42 +187,119 @@
   pointer-events: none;
 }
 
+/* Each handle's hit area is bigger than its visible dot — a corner point
+   resizes, hovering the same button a little further out (still inside this
+   box) rotates instead. See SelectionOverlay.jsx's RESIZE_ZONE_RADIUS. */
 .selection-overlay__handle {
   position: absolute;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.selection-overlay__handle-dot {
   width: 12px;
   height: 12px;
   border-radius: 3px;
   background: var(--color-accent);
   border: 2px solid var(--white);
+  pointer-events: none;
+}
+
+/* Corners only — centered on each corner point. */
+.selection-overlay__handle--nw { left: -14px; top: -14px; }
+.selection-overlay__handle--ne { right: -14px; top: -14px; }
+.selection-overlay__handle--sw { left: -14px; bottom: -14px; }
+.selection-overlay__handle--se { right: -14px; bottom: -14px; }
+
+.selection-overlay__handle--nw.selection-overlay__handle--zone-resize,
+.selection-overlay__handle--se.selection-overlay__handle--zone-resize { cursor: nwse-resize; }
+.selection-overlay__handle--ne.selection-overlay__handle--zone-resize,
+.selection-overlay__handle--sw.selection-overlay__handle--zone-resize { cursor: nesw-resize; }
+.selection-overlay__handle--zone-rotate { cursor: grab; }
+
+/* Edge (side-midpoint) handles: resize-only, drawn as a small grip bar
+   instead of a square dot so they read as visually distinct from the
+   corners at a glance — no dual resize/rotate zone here. */
+.selection-overlay__edge {
+  position: absolute;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.selection-overlay__edge-bar {
+  border-radius: 2px;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  pointer-events: none;
+}
+
+.selection-overlay__edge--n,
+.selection-overlay__edge--s {
+  width: 24px;
+  height: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+.selection-overlay__edge--n .selection-overlay__edge-bar,
+.selection-overlay__edge--s .selection-overlay__edge-bar {
+  width: 16px;
+  height: 6px;
+}
+.selection-overlay__edge--n { top: -10px; }
+.selection-overlay__edge--s { bottom: -10px; }
+
+.selection-overlay__edge--e,
+.selection-overlay__edge--w {
+  width: 20px;
+  height: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+.selection-overlay__edge--e .selection-overlay__edge-bar,
+.selection-overlay__edge--w .selection-overlay__edge-bar {
+  width: 6px;
+  height: 16px;
+}
+.selection-overlay__edge--e { right: -10px; }
+.selection-overlay__edge--w { left: -10px; }
+
+/* Replaces the old standalone rotate dot — now a lock toggle, in the same
+   top-center spot. Rotation itself lives inside the corner handles above. */
+.selection-overlay__lock {
+  position: absolute;
+  left: 50%;
+  top: -32px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  cursor: pointer;
   pointer-events: auto;
   padding: 0;
 }
 
-/* Corners: centered on each corner point, diagonal resize cursor. */
-.selection-overlay__handle--nw { left: -7px; top: -7px; cursor: nwse-resize; }
-.selection-overlay__handle--ne { right: -7px; top: -7px; cursor: nesw-resize; }
-.selection-overlay__handle--sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
-.selection-overlay__handle--se { right: -7px; bottom: -7px; cursor: nwse-resize; }
-
-/* Edges: centered on the midpoint of each side, single-axis resize cursor. */
-.selection-overlay__handle--n { left: 50%; top: -7px; transform: translateX(-50%); cursor: ns-resize; }
-.selection-overlay__handle--s { left: 50%; bottom: -7px; transform: translateX(-50%); cursor: ns-resize; }
-.selection-overlay__handle--e { right: -7px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-.selection-overlay__handle--w { left: -7px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-
-.selection-overlay__rotate {
-  position: absolute;
-  left: 50%;
-  top: -28px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  border: 2px solid var(--white);
-  transform: translateX(-50%);
-  cursor: grab;
-  pointer-events: auto;
-  padding: 0;
+.selection-overlay__lock--locked {
+  background: var(--gray-950);
 }
 
 .canvas-element__caption {

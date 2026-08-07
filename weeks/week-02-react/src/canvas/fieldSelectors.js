@@ -18,20 +18,19 @@ export const FONT_FAMILIES = ['Orbitron', 'Figtree', 'Fira Mono']
 export const SWISS_FONT_BY_ROLE = { title: 'Inter', subtitle: 'Inter', body: 'Inter', accent: 'Inter' }
 export const SWISS_FONT_FAMILIES = ['Inter']
 
-// Fixed role -> swatch mapping (not random) so header/body/accent text always
-// has predictable, guaranteed-legible contrast, and editing a Custom color has
-// a predictable effect on the canvas. `colors` is the user's Custom list from
-// the Color Library — it can be any length (even empty), so the actual
-// light/mid/dark triad is derived via resolveTriad rather than indexed directly.
-// `canvasColor` lets the dark/light ends invert when the canvas itself is
-// dark (e.g. black) — otherwise "dark" text would land on a dark background
-// and disappear the moment someone picks a black canvas.
+// Every text role picks between exactly two ends of the Custom triad — the
+// "normal" (dark) swatch on a light canvas, the "inverse" (light) swatch on a
+// dark one — never the mid tone, which is reserved for non-text uses (e.g.
+// DuotoneFilter/ImageElement). `colors` is the user's Custom list from the
+// Color Library — it can be any length (even empty), so the actual light/dark
+// ends are derived via resolveTriad rather than indexed directly. `canvasColor`
+// is what decides which end is "normal" and which is "inverse" — otherwise
+// "dark" text would land on a dark background and disappear the moment
+// someone picks a black canvas.
 export function colorForRole(role, colors, canvasColor = '#ffffff') {
-  const { mid, dark, light } = resolveTriad(colors)
+  const { dark, light } = resolveTriad(colors)
   const canvasIsDark = relativeLuminance(canvasColor) < 0.5
-  if (role === 'title' || role === 'subtitle') return canvasIsDark ? light : dark
-  if (role === 'body') return mid
-  return canvasIsDark ? light : dark // accent chip text; chip background uses `light` (see TextElement)
+  return canvasIsDark ? light : dark
 }
 
 function isFilled(value) {

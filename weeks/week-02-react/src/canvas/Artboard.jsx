@@ -37,7 +37,7 @@ function patternStyle(canvasPattern, config) {
 
 export default function Artboard({
   domRef, grid, placements, fieldStates, colors, canvasColor, styleMode, canvasPattern, patternConfig,
-  gridVisible, selectedKey, drag, selectAndInspect,
+  gridVisible, selectedKey, drag, selectAndInspect, updatePlacement,
 }) {
   const fieldByKey = Object.fromEntries(fieldStates.map((f) => [f.key, f]))
   const selectedPlacement = selectedKey ? placements[selectedKey] : null
@@ -126,6 +126,7 @@ export default function Artboard({
           placement={selectedPlacement}
           onStartResize={drag.startResize}
           onStartRotate={drag.startRotate}
+          onToggleLock={() => updatePlacement(selectedPlacement.fieldKey, { locked: !selectedPlacement.locked })}
         />
       )}
     </div>

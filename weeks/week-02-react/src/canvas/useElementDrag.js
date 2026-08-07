@@ -27,6 +27,9 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
     e.stopPropagation()
     e.preventDefault()
     onSelect?.(placement.fieldKey)
+    // A locked element is still selectable (so it can be unlocked again),
+    // just not draggable — shuffling around it, not it, is the whole point.
+    if (placement.locked) return
     const startX = e.clientX
     const startY = e.clientY
     const { row: startRow, col: startCol, colSpan, rowSpan } = placement
@@ -44,8 +47,7 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
 
   // Which axes a handle drags, and which edge of the box stays put (the
   // opposite edge/corner is the anchor — e.g. dragging "w" keeps the right
-  // edge fixed and grows the box leftward instead of the default top-left
-  // anchor every handle used before there was more than one of them).
+  // edge fixed and grows the box leftward).
   const HANDLE_CONFIG = {
     n: { x: false, y: true, fromLeft: false, fromTop: true },
     s: { x: false, y: true, fromLeft: false, fromTop: false },
@@ -62,7 +64,7 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
   // size, same as dragging a text object's corner in a design tool. An edge
   // handle (one axis only) stretches just that dimension of the box; font
   // size is untouched and the text simply re-wraps/re-fills the new width
-  // or height, same as the old single-handle behavior.
+  // or height.
   function startResize(e, placement, handle = 'se') {
     e.stopPropagation()
     e.preventDefault()

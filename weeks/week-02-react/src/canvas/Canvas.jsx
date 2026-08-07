@@ -76,7 +76,7 @@ export default function Canvas() {
       if (!placement) return
 
       if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (!placement.isAsset) return
+        if (!placement.isAsset || placement.locked) return
         e.preventDefault()
         removeAssetPlacement(selectedKey)
         setSelectedKey(null)
@@ -84,7 +84,7 @@ export default function Canvas() {
       }
 
       const delta = ARROW_DELTAS[e.key]
-      if (!delta || placement.isBackground) return
+      if (!delta || placement.isBackground || placement.locked) return
       e.preventDefault()
       const col = clamp(placement.col + delta.dCol, 0, renderedGrid.cols - placement.colSpan)
       const row = clamp(placement.row + delta.dRow, 0, renderedGrid.rows - placement.rowSpan)
@@ -117,6 +117,7 @@ export default function Canvas() {
               selectedKey={selectedKey}
               drag={drag}
               selectAndInspect={selectAndInspect}
+              updatePlacement={updatePlacement}
             />
           </div>
         </div>
