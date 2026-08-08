@@ -1,3 +1,6 @@
+import { sumTrackRange } from './gridMath.js'
+import { withDragListeners } from './dragListeners.js'
+
 function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n))
 }
@@ -5,23 +8,13 @@ function clamp(n, lo, hi) {
 // Pointer-driven move/resize/rotate for the selected canvas element. Screen
 // pixel deltas are converted to grid-cell deltas using the current
 // fit-to-view scale + cell step (cellSize + gap), so dragging feels 1:1
-// regardless of how zoomed-out the artboard currently is.
+// regardless of how zoomed-out the artboard currently is. The step itself
+// stays average-cell-size-based even on a non-uniform (Custom grid) canvas —
+// it's only a "how many cells did the pointer cross" heuristic, not a
+// correctness-critical box size, so the average is an acceptable approximation.
 export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
   const stepX = grid.cellWidth + grid.gapPx
   const stepY = grid.cellHeight + grid.gapPx
-
-  function withDragListeners(onMove, onUp) {
-    function handleMove(ev) {
-      onMove(ev)
-    }
-    function handleUp(ev) {
-      onUp?.(ev)
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-    }
-    window.addEventListener('pointermove', handleMove)
-    window.addEventListener('pointerup', handleUp)
-  }
 
   function startMove(e, placement) {
     e.stopPropagation()
@@ -74,8 +67,10 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
     const startY = e.clientY
     const { row: startRow, col: startCol, colSpan: startColSpan, rowSpan: startRowSpan } = placement
     const startFontSize = placement.fontSizeOverride ?? placement.fontSize
-    const startWidthPx = startColSpan * grid.cellWidth + (startColSpan - 1) * grid.gapPx
-    const startHeightPx = startRowSpan * grid.cellHeight + (startRowSpan - 1) * grid.gapPx
+    // Real placed-box pixel size (not an estimate) — uses the actual spanned
+    // tracks' sizes, which matters once columns/rows are unequal (Custom grid).
+    const startWidthPx = sumTrackRange(grid.colSizes, startCol, startColSpan, grid.gapPx)
+    const startHeightPx = sumTrackRange(grid.rowSizes, startRow, startRowSpan, grid.gapPx)
 
     withDragListeners((ev) => {
       const dx = (ev.clientX - startX) / scale
@@ -110,8 +105,8 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
       const patch = { row, col, colSpan, rowSpan }
 
       if (isCorner && typeof startFontSize === 'number') {
-        const newWidthPx = colSpan * grid.cellWidth + (colSpan - 1) * grid.gapPx
-        const newHeightPx = rowSpan * grid.cellHeight + (rowSpan - 1) * grid.gapPx
+        const newWidthPx = sumTrackRange(grid.colSizes, col, colSpan, grid.gapPx)
+        const newHeightPx = sumTrackRange(grid.rowSizes, row, rowSpan, grid.gapPx)
         const scaleFactor = (newWidthPx / startWidthPx + newHeightPx / startHeightPx) / 2
         patch.fontSizeOverride = clamp(Math.round(startFontSize * scaleFactor), 8, 300)
       }

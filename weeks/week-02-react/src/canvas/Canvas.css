@@ -9,6 +9,17 @@
   background: var(--color-bg-canvas-region);
 }
 
+/* Space-held pan mode: grab/grabbing cursor wins over every element's own
+   cursor (move/resize/rotate) underneath it — see usePanZoom.js. */
+.canvas-region.is-pan-ready,
+.canvas-region.is-pan-ready * {
+  cursor: grab !important;
+}
+.canvas-region.is-panning,
+.canvas-region.is-panning * {
+  cursor: grabbing !important;
+}
+
 .canvas-stage {
   display: flex;
   flex-direction: column;
@@ -76,8 +87,119 @@
   pointer-events: none;
 }
 
+/* Custom (Swiss) grid's draggable/lockable divider lines — CustomGridOverlay.jsx.
+   Each is a wide invisible hit-strip (for grabbability) with a thin visible
+   bar centered inside it; same difference-blend trick as .grid-overlay__cell
+   so the bar stays visible on a dark canvas. */
+.custom-grid-line {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-grid-line--col { cursor: col-resize; }
+.custom-grid-line--row { cursor: row-resize; }
+.custom-grid-line.is-locked { cursor: default; }
+
+.custom-grid-line__bar {
+  position: absolute;
+  background: var(--overlay-grid-line);
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+.custom-grid-line--col .custom-grid-line__bar { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
+.custom-grid-line--row .custom-grid-line__bar { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+
+.custom-grid-line:not(.is-locked):hover .custom-grid-line__bar {
+  background: var(--color-accent);
+  mix-blend-mode: normal;
+}
+.custom-grid-line--col:not(.is-locked):hover .custom-grid-line__bar { width: 2px; }
+.custom-grid-line--row:not(.is-locked):hover .custom-grid-line__bar { height: 2px; }
+
+/* Selected (click to select, Backspace/Delete to remove — Canvas.jsx) stays
+   highlighted independent of hover, so the "this is what Delete will
+   remove" state is visible without needing the pointer to stay over it. */
+.custom-grid-line.is-selected .custom-grid-line__bar {
+  background: var(--color-accent);
+  mix-blend-mode: normal;
+}
+.custom-grid-line--col.is-selected .custom-grid-line__bar { width: 2px; }
+.custom-grid-line--row.is-selected .custom-grid-line__bar { height: 2px; }
+
+/* End handles: grab either terminus of a line and drag it along the canvas
+   border — see useGridLineDrag.js's startEndDrag. Dragging one far enough
+   toward the perpendicular pair of edges flips the line to the other axis,
+   so these sit right at the two points where that flip reads as "sliding
+   around the corner." Hidden until hover (a locked line renders none at
+   all — nothing to drag). */
+.custom-grid-line__end {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  padding: 0;
+  cursor: move;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+.custom-grid-line:hover .custom-grid-line__end {
+  opacity: 1;
+  pointer-events: auto;
+}
+.custom-grid-line--col .custom-grid-line__end--a { left: 50%; top: 0; transform: translate(-50%, -50%); }
+.custom-grid-line--col .custom-grid-line__end--b { left: 50%; bottom: 0; transform: translate(-50%, 50%); }
+.custom-grid-line--row .custom-grid-line__end--a { top: 50%; left: 0; transform: translate(-50%, -50%); }
+.custom-grid-line--row .custom-grid-line__end--b { top: 50%; right: 0; transform: translate(50%, -50%); }
+
+/* Lock toggle: offset toward one end of the line (top for a column line,
+   left for a row line) rather than dead-center — center is also the most
+   natural place to grab the line to drag it, so sitting the lock badge
+   there would mean a drag attempt starting from the middle regularly hits
+   the lock button instead. Hidden until hover, except when already locked —
+   a locked line's badge stays visible so its state is discoverable without
+   needing to hover every line. */
+.custom-grid-line__lock {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
+}
+.custom-grid-line--col .custom-grid-line__lock { left: 50%; top: 16px; transform: translateX(-50%); }
+.custom-grid-line--row .custom-grid-line__lock { top: 50%; left: 16px; transform: translateY(-50%); }
+.custom-grid-line:hover .custom-grid-line__lock,
+.custom-grid-line.is-locked .custom-grid-line__lock {
+  opacity: 1;
+  pointer-events: auto;
+}
+.custom-grid-line.is-locked .custom-grid-line__lock {
+  background: var(--gray-950);
+}
+
 .canvas-element {
   position: relative;
+  /* Without an explicit 0 here, a grid item's default automatic minimum
+     size can still let its content (e.g. a title that wraps to more lines
+     than its row was sized for) push the box taller/wider than its actual
+     grid track, bleeding into neighboring cells instead of being clipped by
+     overflow:hidden below — the classic CSS Grid "item won't shrink below
+     its content" gotcha. This is what makes the grid's row/col track sizes
+     actually authoritative for this box. */
   min-width: 0;
   min-height: 0;
   line-height: 1.15;

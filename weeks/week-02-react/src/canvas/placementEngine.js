@@ -114,10 +114,17 @@ export function scanFirstFit(occupancy, grid, colSpan, rowSpan) {
 // the grid downward (more rows) and retries once more.
 // `allowGrow: false` (shuffleEngine.js — shuffle must never change the
 // canvas/template size) keeps shrinking all the way down to a 1x1 footprint
-// instead of growing, and as an absolute last resort places at (0,0) even if
-// that means overlapping something — only reachable on a grid so full there
-// isn't a single free cell left, which should be exceptionally rare.
-export function placeElement(occupancy, grid, role, { allowGrow = true, span } = {}) {
+// instead of growing. From there, `allowOverlapFallback` (default true)
+// decides what happens if even a 1x1 spot can't be found: true places at
+// (0,0) anyway, overlapping whatever's there — the right call for required
+// content (title, body, ...), which must end up somewhere. false returns
+// null instead — the right call for optional/decorative placements (a
+// randomly-included locked asset) where "doesn't appear this shuffle" beats
+// "appears on top of something else." On a small, coarse Custom/Swiss grid
+// with several elements already competing for the same handful of rows,
+// this null case is a real, fairly common outcome now, not the "exceptionally
+// rare" edge it originally was on a bigger uniform grid.
+export function placeElement(occupancy, grid, role, { allowGrow = true, span, allowOverlapFallback = true } = {}) {
   let { colSpan, rowSpan } = span
     ? { colSpan: Math.min(span.colSpan, grid.cols), rowSpan: Math.min(span.rowSpan, grid.rows) }
     : pickSpan(role, grid.cols, grid.rows)
@@ -142,12 +149,13 @@ export function placeElement(occupancy, grid, role, { allowGrow = true, span } =
         return { row: spot.row, col: spot.col, colSpan, rowSpan, grid }
       }
     }
+    if (!allowOverlapFallback) return null
     markOccupied(occupancy, 0, 0, 1, 1)
     return { row: 0, col: 0, colSpan: 1, rowSpan: 1, grid }
   }
 
   const grownGrid = growGridRows(grid, 2)
-  return placeElement(occupancy, grownGrid, role, { allowGrow, span })
+  return placeElement(occupancy, grownGrid, role, { allowGrow, span, allowOverlapFallback })
 }
 
 // Places a new member of an autolayout group (date/time/location) directly

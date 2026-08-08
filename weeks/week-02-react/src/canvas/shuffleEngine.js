@@ -2,41 +2,14 @@ import {
   placeElement, placeGroupMember, scanFirstFit, markOccupied, pickSpan,
   READABLE_FLOOR, DEFAULT_HEADER_CEILING,
 } from './placementEngine.js'
+import { sumTrackRange, applyCustomTrackSizes } from './gridMath.js'
+import { generateCustomGridLines, linesToTrackSizes } from './customGrid.js'
+import { rowsNeededForText, ensureColSpanFitsWidestWord, placeTextFitted, capRowSpanForHeadroom } from './textFit.js'
 import { FONT_FAMILIES, FONT_WEIGHT_BY_ROLE, SWISS_FONT_FAMILIES } from './fieldSelectors.js'
 import { rankSwatchesByContrast, readableSwatches, ensureColors } from './colorContrast.js'
 import { allSignatureColors, paletteByName, previewSwatches, applyPaletteOverrides } from './colorPalettes.js'
-import { estimateTextBlockHeight, widestWordWidth } from './textMeasure.js'
+import { estimateTextBlockHeight } from './textMeasure.js'
 import { LOCKED_ASSETS } from '../components/ControlPanel/panels/AssetsPanel.jsx'
-
-// Cushion on top of the measured height — canvas measureText vs. real CSS
-// layout metrics can drift meaningfully, especially right after a shuffle
-// if a webfont (e.g. Fira Mono) hasn't finished loading yet and the
-// measurement silently falls back to a narrower system font. A visibly
-// clipped title is worse than a box with a little extra breathing room, so
-// this errs generous.
-const ROW_FIT_SAFETY_MARGIN = 1.3
-
-function rowsNeededForText(text, fontFamily, fontWeight, fontSize, colSpan, grid) {
-  const boxWidthPx = colSpan * grid.cellWidth + (colSpan - 1) * grid.gapPx
-  const requiredHeightPx = estimateTextBlockHeight({ text, fontFamily, fontWeight, fontSize, boxWidthPx }) * ROW_FIT_SAFETY_MARGIN
-  const rowStep = grid.cellHeight + grid.gapPx
-  return Math.max(1, Math.ceil((requiredHeightPx + grid.gapPx) / rowStep))
-}
-
-// Grows colSpan (never past the grid's own width) until the box is wide
-// enough for the text's widest single word. A colSpan picked purely from the
-// role's span pool (pickSpan) has no idea how wide the actual words are —
-// a word never breaks mid-character (countWrappedLines above already treats
-// it as unbreakable, and Swiss mode's CSS enforces the same via word-break:
-// keep-all), so a box narrower than its widest word always overflows it.
-function ensureColSpanFitsWidestWord(colSpan, grid, text, fontFamily, fontWeight, fontSize) {
-  const wordPx = widestWordWidth(text, fontSize, fontFamily, fontWeight)
-  let span = colSpan
-  while (span < grid.cols && span * grid.cellWidth + (span - 1) * grid.gapPx < wordPx) {
-    span += 1
-  }
-  return span
-}
 
 // Font size variety pool for shuffle only — distinct from placementEngine.js's
 // SIZE_POOL, which is deliberately fixed to a single default per role (40/24/16)
@@ -190,38 +163,15 @@ function pickInfoSwatch(ranked) {
   return ranked[Math.floor(Math.random() * Math.min(2, ranked.length))]
 }
 
-// Picks a width from the role's normal span pool (that's still where size
-// variety comes from) but computes the row span from the field's actual
-// text/font instead of the pool's random guess, so the box is tall enough to
-// show the full content without clipping whenever the canvas has room for
-// it. Never grows the grid (shuffle must never change the canvas/template
-// size) — if the ideal height doesn't fit anywhere, shrinks the row span
-// step by step until something does, falling back to the general capped
-// placer (guaranteed to find a spot without growing) as an absolute last
-// resort.
-function placeTextFitted(occupancy, grid, role, text, fontFamily, fontWeight, fontSize) {
-  const { colSpan: pickedColSpan } = pickSpan(role, grid.cols, grid.rows)
-  const colSpan = ensureColSpanFitsWidestWord(pickedColSpan, grid, text, fontFamily, fontWeight, fontSize)
-  let rowSpan = Math.min(rowsNeededForText(text, fontFamily, fontWeight, fontSize, colSpan, grid), grid.rows)
-
-  while (rowSpan >= 1) {
-    const spot = scanFirstFit(occupancy, grid, colSpan, rowSpan)
-    if (spot) {
-      markOccupied(occupancy, spot.row, spot.col, rowSpan, colSpan)
-      return { row: spot.row, col: spot.col, colSpan, rowSpan, grid }
-    }
-    rowSpan -= 1
-  }
-  return placeElement(occupancy, grid, role, { allowGrow: false })
-}
-
-// Same fitted-height idea as placeTextFitted, but stacked beneath an anchor
+// Same fitted-height idea as placeTextFitted (imported from textFit.js), but
+// stacked beneath an anchor
 // (title, or the info-group's first member) in that anchor's exact column
 // band, via placeGroupMember's now-parametrized rowSpan. Also never grows —
 // shrinks the row span to whatever's left in the band before giving up and
 // returning null (caller falls back to an independent spot).
 function placeStackedTextFitted(occupancy, grid, anchorCol, anchorColSpan, nextRow, text, fontFamily, fontWeight, fontSize) {
-  let rowSpan = Math.min(rowsNeededForText(text, fontFamily, fontWeight, fontSize, anchorColSpan, grid), grid.rows - nextRow)
+  const roomBelow = Math.max(1, grid.rows - nextRow)
+  let rowSpan = capRowSpanForHeadroom(Math.min(rowsNeededForText(text, fontFamily, fontWeight, fontSize, anchorColSpan, grid), roomBelow), grid)
   while (rowSpan >= 1) {
     const placed = placeGroupMember(occupancy, grid, anchorCol, anchorColSpan, nextRow, rowSpan, { allowGrow: false })
     if (placed) return placed
@@ -294,7 +244,7 @@ function reserveInfoGroups(occupancy, grid, specs) {
 function placeBodyOrAccentWithOverlap(occupancy, grid, role, candidate, placedTextBlocks, pairedKeys) {
   const { colSpan: pickedColSpan } = pickSpan(role, grid.cols, grid.rows)
   const colSpan = ensureColSpanFitsWidestWord(pickedColSpan, grid, candidate.text, candidate.fontFamily, candidate.fontWeight, candidate.fontSize)
-  let rowSpan = Math.min(rowsNeededForText(candidate.text, candidate.fontFamily, candidate.fontWeight, candidate.fontSize, colSpan, grid), grid.rows)
+  let rowSpan = capRowSpanForHeadroom(Math.min(rowsNeededForText(candidate.text, candidate.fontFamily, candidate.fontWeight, candidate.fontSize, colSpan, grid), grid.rows), grid)
 
   while (rowSpan >= 1) {
     const spot = scanFirstFit(occupancy, grid, colSpan, rowSpan)
@@ -307,8 +257,11 @@ function placeBodyOrAccentWithOverlap(occupancy, grid, role, candidate, placedTe
 
   for (const existing of placedTextBlocks) {
     if (pairedKeys.has(existing.fieldKey)) continue
-    const cellWidthPx = existing.colSpan * grid.cellWidth + (existing.colSpan - 1) * grid.gapPx
-    const cellHeightPx = existing.rowSpan * grid.cellHeight + (existing.rowSpan - 1) * grid.gapPx
+    // Real placed-box pixel size (existing.col/row are already known here,
+    // unlike the pre-placement estimates above) — uses the actual spanned
+    // tracks, which matters once columns/rows are unequal (Custom grid).
+    const cellWidthPx = sumTrackRange(grid.colSizes, existing.col, existing.colSpan, grid.gapPx)
+    const cellHeightPx = sumTrackRange(grid.rowSizes, existing.row, existing.rowSpan, grid.gapPx)
     const existingH = estimateTextBlockHeight({
       text: existing.text, fontFamily: existing.fontFamily, fontWeight: existing.fontWeight, fontSize: existing.fontSize, boxWidthPx: cellWidthPx,
     })
@@ -339,7 +292,14 @@ function shuffleAssets(prevPlacements, grid, occupancy) {
   for (let i = 0; i < LOCKED_ASSETS.length; i++) {
     if (Math.random() >= ASSET_PRESENCE_CHANCE) continue
     const key = `locked-asset-${i}-${Date.now()}-${Math.random()}`
-    const placed = placeElement(occupancy, workingGrid, 'asset', { allowGrow: false, span: LOCKED_ASSETS[i].size })
+    // A locked asset only shows up here at all because this random roll
+    // happened to hit (ASSET_PRESENCE_CHANCE) — it's decorative, not user
+    // content, so if the grid genuinely has no free cell left for it,
+    // skipping it (allowOverlapFallback: false) beats forcing it on top of
+    // something else. An upload below is the user's own content instead, so
+    // that path keeps the default guaranteed-placement behavior.
+    const placed = placeElement(occupancy, workingGrid, 'asset', { allowGrow: false, span: LOCKED_ASSETS[i].size, allowOverlapFallback: false })
+    if (!placed) continue
     workingGrid = placed.grid
     next[key] = {
       fieldKey: key, role: 'asset', isAsset: true,
@@ -376,7 +336,10 @@ function shuffleAssets(prevPlacements, grid, occupancy) {
 // `manual` flag entirely (shuffle always rerolls everything). Locked assets
 // may be freshly added or dropped; user uploads and all content fields are
 // only repositioned, never deleted.
-export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canvasColor, styleMode, paletteOverrides }) {
+export function shuffleDesign({
+  fieldStates, placements, baseGrid, colors, canvasColor, styleMode, paletteOverrides,
+  customGridLines = [], elementCount = 0,
+}) {
   // Custom colors are blended with the active palette's signature colors
   // (not replaced by them) — otherwise, the moment a user adds even one
   // Custom color, shuffle would only ever draw from that single color and
@@ -408,7 +371,31 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
   const newGradientOpacity2 = pickOpacity(40, 80)
   const newGradientAngle = pickAngle()
 
-  let workingGrid = baseGrid
+  // Grid type: which structure (Uniform or Custom/Swiss) this shuffle lands
+  // on, and — if Custom — a freshly regenerated line layout (locked lines
+  // survive untouched, per generateCustomGridLines' contract in customGrid.js).
+  // Swiss styleMode always forces Custom, matching the discipline's own
+  // asymmetric-grid character; Free mode rolls either, 50/50, alongside
+  // every other "any style" choice shuffle already makes. `baseGrid` here is
+  // always the plain uniform grid (DesignContext.jsx passes baseUniformGrid,
+  // never an already-customized one) — Custom's track sizes are derived
+  // fresh from it every time, never compounded from a previous shuffle's result.
+  const newGridType = styleMode === 'Swiss' ? 'Custom' : (Math.random() < 0.5 ? 'Uniform' : 'Custom')
+  const newCustomGridLines = newGridType === 'Custom'
+    ? generateCustomGridLines(elementCount, baseGrid, customGridLines)
+    // Landed on Uniform this time — leave any stored lines dormant (not
+    // cleared) so switching back to Custom later restores dragged/locked
+    // work instead of losing it to an unlucky coin-flip.
+    : customGridLines
+  const workingPlacementGrid = newGridType === 'Custom'
+    ? applyCustomTrackSizes(
+        baseGrid,
+        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'col'), baseGrid.usableWidth),
+        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'row'), baseGrid.usableHeight),
+      )
+    : baseGrid
+
+  let workingGrid = workingPlacementGrid
   const occupancy = new Set()
   // Locked elements (any role, including assets/uploads — see shuffleAssets)
   // keep their exact spot across a shuffle instead of being rerolled; every
@@ -576,6 +563,8 @@ export function shuffleDesign({ fieldStates, placements, baseGrid, colors, canva
 
   return {
     placements: next,
+    gridType: newGridType,
+    customGridLines: newCustomGridLines,
     canvasColor: newCanvasColor,
     canvasPattern: newCanvasPattern,
     patternSize: newPatternSize,

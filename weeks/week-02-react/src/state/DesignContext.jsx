@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useRef, useState } from 'react'
-import { getPageDimensions, computeGrid } from '../canvas/gridMath.js'
+import { getPageDimensions, computeGrid, applyCustomTrackSizes } from '../canvas/gridMath.js'
+import { generateCustomGridLines, linesToTrackSizes, createGridLine, boundingLineIds } from '../canvas/customGrid.js'
 import { buildOccupancy, placeElement } from '../canvas/placementEngine.js'
 import { buildFieldStates } from '../canvas/fieldSelectors.js'
 import { shuffleDesign } from '../canvas/shuffleEngine.js'
@@ -23,6 +24,14 @@ export function DesignProvider({ children }) {
   // restrained white/near-black/one-accent palette, no decorative pattern) —
   // a soft bias, not a hard lock: manual per-element overrides still work.
   const [styleMode, setStyleMode] = useState('Free')
+  // Grid Type (Design > Grid): 'Uniform' is today's evenly-spaced grid;
+  // 'Custom' is a real Swiss-style asymmetric grid — customGridLines holds
+  // the actual divider lines (see customGrid.js), folded into baseGrid below.
+  // Independent of styleMode — switching styleMode to Swiss doesn't force
+  // this to Custom (a soft bias, same philosophy as styleMode itself); only
+  // Shuffle enforces the Swiss-implies-Custom pairing (see shuffle() below).
+  const [gridType, setGridTypeState] = useState('Uniform')
+  const [customGridLines, setCustomGridLines] = useState([])
   // Dots/Grid Lines: spacing (px) between elements, and their own color —
   // bigger value, bigger/sparser pattern.
   const [patternSize, setPatternSize] = useState(18)
@@ -74,10 +83,21 @@ export function DesignProvider({ children }) {
   // so any panel — Assets' "add to canvas" placement, Export's resolution
   // label — can read the same current grid without duplicating gridMath calls.
   const { width: pixelWidth, height: pixelHeight } = getPageDimensions(pageSize, customWidth, customHeight)
-  const baseGrid = useMemo(
+  // baseUniformGrid: today's plain evenly-spaced grid, unchanged. baseGrid
+  // (what every consumer actually reads) layers Custom-mode track sizing on
+  // top when active, otherwise passes the uniform grid straight through —
+  // every existing baseGrid consumer (Canvas.jsx, placementEngine.js,
+  // shuffleEngine.js, addAssetPlacement below) is unaffected either way.
+  const baseUniformGrid = useMemo(
     () => computeGrid(pixelWidth, pixelHeight, gap, margin),
     [pixelWidth, pixelHeight, gap, margin]
   )
+  const baseGrid = useMemo(() => {
+    if (gridType !== 'Custom') return baseUniformGrid
+    const colSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'col'), baseUniformGrid.usableWidth)
+    const rowSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'row'), baseUniformGrid.usableHeight)
+    return applyCustomTrackSizes(baseUniformGrid, colSizes, rowSizes)
+  }, [baseUniformGrid, gridType, customGridLines])
 
   // DOM node of the rendered artboard (set by Canvas/Artboard), read by the
   // Export folder's Download action to rasterize exactly what's on screen.
@@ -104,6 +124,44 @@ export function DesignProvider({ children }) {
   })
   function updateImage(patch) {
     setImage((s) => ({ ...s, ...patch }))
+  }
+
+  // "Element count" the Custom grid's line generator scales with — the same
+  // filled-field filter shuffleEngine.js's own per-field loop already applies.
+  const filledElementCount = buildFieldStates(content, image).filter((f) => f.filled).length
+
+  function updateGridLine(id, patch) {
+    setCustomGridLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+  }
+
+  // Manual line management (double-click to add, select+Backspace/Delete to
+  // remove — see Canvas.jsx) — independent of the algorithmic generator
+  // above, same "user's explicit edit" precedent as a dragged/locked line.
+  function addGridLine(axis, position) {
+    const line = createGridLine(axis, position)
+    setCustomGridLines((prev) => [...prev, line])
+    return line.id
+  }
+  function removeGridLine(id) {
+    setCustomGridLines((prev) => prev.filter((l) => l.id !== id))
+  }
+
+  // Unlocked lines only ever regenerate on an explicit call to this (switching
+  // into Custom fresh, the Regenerate action, or a Shuffle that rolls Custom)
+  // — never as a side effect of content changing, per the "on-demand only"
+  // requirement. Locked lines always survive untouched (see customGrid.js).
+  function regenerateCustomGrid() {
+    setCustomGridLines((prev) => generateCustomGridLines(filledElementCount, baseUniformGrid, prev))
+  }
+
+  // Switching TO Custom for the first time (no lines yet) generates a fresh
+  // layout once; toggling back to Custom later reuses whatever lines already
+  // exist instead of silently discarding dragged/locked work.
+  function setGridType(next) {
+    setGridTypeState(next)
+    if (next === 'Custom' && customGridLines.length === 0) {
+      setCustomGridLines(generateCustomGridLines(filledElementCount, baseUniformGrid, []))
+    }
   }
 
   // The background image isn't a Content-tab field (it has no row/col — it
@@ -166,6 +224,33 @@ export function DesignProvider({ children }) {
     })
   }
 
+  // Locking an element (SelectionOverlay's lock toggle) is supposed to mean
+  // "shuffling changes nothing about it" — true for its row/col indices
+  // (shuffleEngine.js reserves a locked placement's cells), but on a Custom
+  // grid the LINES bounding that cell can still move on the next regenerate/
+  // shuffle, shifting the locked element's actual on-screen position/size
+  // even though its indices never changed. Locking the element now also
+  // locks whichever grid lines currently sit on its cell's edges, so a
+  // regenerate can't move them out from under it. Unlocking the element
+  // deliberately does NOT auto-unlock those lines back — the user locked
+  // them (even if indirectly), so leaving them locked until an explicit
+  // unlock (on the line itself, or the Grid panel) avoids silently
+  // discarding what might be relied on by something else's layout too.
+  function toggleElementLock(key) {
+    const placement = placements[key]
+    if (!placement) return
+    const nextLocked = !placement.locked
+    updatePlacement(key, { locked: nextLocked })
+    if (nextLocked && gridType === 'Custom') {
+      const colLineIds = boundingLineIds(customGridLines, 'col', placement.col, placement.colSpan, baseGrid.cols)
+      const rowLineIds = boundingLineIds(customGridLines, 'row', placement.row, placement.rowSpan, baseGrid.rows)
+      const idsToLock = new Set([...colLineIds, ...rowLineIds])
+      if (idsToLock.size) {
+        setCustomGridLines((prev) => prev.map((l) => (idsToLock.has(l.id) ? { ...l, locked: true } : l)))
+      }
+    }
+  }
+
   // Assets-tab items (locked library assets + user uploads) place themselves
   // directly onto the canvas grid on "Add", using the same first-fit scan the
   // content-field placement engine uses — but keyed/flagged separately
@@ -217,9 +302,18 @@ export function DesignProvider({ children }) {
     preShuffleSnapshotRef.current = {
       placements, canvasColor, canvasPattern, patternSize, dotColor, gridColor,
       gradientColor1, gradientOpacity1, gradientColor2, gradientOpacity2, gradientAngle,
+      gridType, customGridLines,
     }
-    const result = shuffleDesign({ fieldStates, placements, baseGrid, colors, canvasColor, styleMode, paletteOverrides })
+    const result = shuffleDesign({
+      fieldStates, placements, baseGrid: baseUniformGrid, colors, canvasColor, styleMode, paletteOverrides,
+      customGridLines, elementCount: filledElementCount,
+    })
     setPlacements(result.placements)
+    // Raw state setter, not the setGridType wrapper — shuffleDesign already
+    // computed the right customGridLines for whichever gridType it landed
+    // on, so there's no "generate a fresh layout" step to also trigger here.
+    setGridTypeState(result.gridType)
+    setCustomGridLines(result.customGridLines)
     setCanvasColor(result.canvasColor)
     setCanvasPattern(result.canvasPattern)
     setPatternSize(result.patternSize)
@@ -237,6 +331,8 @@ export function DesignProvider({ children }) {
     if (!preShuffleSnapshotRef.current) return
     const snap = preShuffleSnapshotRef.current
     setPlacements(snap.placements)
+    setGridTypeState(snap.gridType)
+    setCustomGridLines(snap.customGridLines)
     setCanvasColor(snap.canvasColor)
     setCanvasPattern(snap.canvasPattern)
     setPatternSize(snap.patternSize)
@@ -287,6 +383,8 @@ export function DesignProvider({ children }) {
     canvasColor, setCanvasColor,
     canvasPattern, setCanvasPattern,
     styleMode, setStyleMode,
+    gridType, setGridType, customGridLines, updateGridLine, regenerateCustomGrid,
+    addGridLine, removeGridLine,
     patternSize, setPatternSize,
     dotColor, setDotColor,
     gridColor, setGridColor,
@@ -304,7 +402,7 @@ export function DesignProvider({ children }) {
     artboardRef,
     content, updateContent,
     image, updateImage, setBackgroundImage,
-    placements, setPlacements, updatePlacement,
+    placements, setPlacements, updatePlacement, toggleElementLock,
     addAssetPlacement, removeAssetPlacement,
     selectedKey, setSelectedKey,
     inspectorOpen, selectAndInspect,

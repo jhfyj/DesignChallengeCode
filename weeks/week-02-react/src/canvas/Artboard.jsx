@@ -1,4 +1,5 @@
 import GridOverlay from './GridOverlay.jsx'
+import CustomGridOverlay from './CustomGridOverlay.jsx'
 import SelectionOverlay from './SelectionOverlay.jsx'
 import DuotoneFilter from './DuotoneFilter.jsx'
 import TextElement from './elements/TextElement.jsx'
@@ -37,7 +38,9 @@ function patternStyle(canvasPattern, config) {
 
 export default function Artboard({
   domRef, grid, placements, fieldStates, colors, canvasColor, styleMode, canvasPattern, patternConfig,
-  gridVisible, selectedKey, drag, selectAndInspect, updatePlacement,
+  gridVisible, selectedKey, drag, selectAndInspect, toggleElementLock,
+  gridType, customGridLines, gridLineDrag, onToggleLineLock,
+  selectedLineId, onSelectLine, onArtboardDoubleClick,
 }) {
   const fieldByKey = Object.fromEntries(fieldStates.map((f) => [f.key, f]))
   const selectedPlacement = selectedKey ? placements[selectedKey] : null
@@ -48,14 +51,19 @@ export default function Artboard({
     <div
       ref={domRef}
       className="artboard"
+      onDoubleClick={onArtboardDoubleClick}
       style={{
         width: grid.pixelWidth,
         height: grid.pixelHeight,
         padding: grid.marginPx,
         gap: grid.gapPx,
         backgroundColor: background ? undefined : canvasColor,
-        gridTemplateColumns: `repeat(${grid.cols}, ${grid.cellWidth}px)`,
-        gridTemplateRows: `repeat(${grid.rows}, ${grid.cellHeight}px)`,
+        // An explicit per-track size list, not repeat(n, Xpx) — works
+        // identically whether every track is equal (Uniform grid, where
+        // colSizes/rowSizes are just the flat-filled cellWidth/cellHeight
+        // array) or unequal (Custom/Swiss grid), so no branching needed here.
+        gridTemplateColumns: grid.colSizes.map((w) => `${w}px`).join(' '),
+        gridTemplateRows: grid.rowSizes.map((h) => `${h}px`).join(' '),
       }}
     >
       <DuotoneFilter colors={colors} />
@@ -81,7 +89,13 @@ export default function Artboard({
           legibility scrim sits over the photo without covering the design's
           actual content. */}
       {overlayStyle && <div className="artboard-pattern-overlay" style={overlayStyle} />}
-      <GridOverlay cols={grid.cols} rows={grid.rows} visible={gridVisible} />
+      {/* Uniform's GridOverlay is purely decorative (pointer-events: none) so
+          it stays behind content, same as always. CustomGridOverlay's lines
+          need to stay grabbable even where a text/image box currently
+          crosses one, so — unlike GridOverlay — it renders AFTER the
+          elements below instead, same reasoning as SelectionOverlay's
+          handles needing to sit on top of whatever's selected. */}
+      {gridType !== 'Custom' && <GridOverlay cols={grid.cols} rows={grid.rows} visible={gridVisible} />}
       {Object.values(placements).map((placement) => {
         if (placement.isBackground) return null
         const field = fieldByKey[placement.fieldKey]
@@ -121,12 +135,24 @@ export default function Artboard({
           />
         )
       })}
+      {gridType === 'Custom' && (
+        <CustomGridOverlay
+          grid={grid}
+          lines={customGridLines}
+          visible={gridVisible}
+          selectedLineId={selectedLineId}
+          onStartDrag={gridLineDrag.startDrag}
+          onStartEndDrag={gridLineDrag.startEndDrag}
+          onSelectLine={onSelectLine}
+          onToggleLock={onToggleLineLock}
+        />
+      )}
       {selectedPlacement && !selectedPlacement.isBackground && (
         <SelectionOverlay
           placement={selectedPlacement}
           onStartResize={drag.startResize}
           onStartRotate={drag.startRotate}
-          onToggleLock={() => updatePlacement(selectedPlacement.fieldKey, { locked: !selectedPlacement.locked })}
+          onToggleLock={() => toggleElementLock(selectedPlacement.fieldKey)}
         />
       )}
     </div>

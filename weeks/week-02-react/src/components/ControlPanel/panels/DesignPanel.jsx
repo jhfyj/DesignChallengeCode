@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download } from '@carbon/icons-react'
+import { Download, Renew } from '@carbon/icons-react'
 import { toPng, toJpeg, toSvg } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import { useDesignState } from '../../../state/DesignContext.jsx'
@@ -10,6 +10,7 @@ import SingleColorRow from '../SingleColorRow.jsx'
 import ActionButton from '../ActionButton.jsx'
 
 const PATTERN_OPTIONS = ['No Background Pattern', 'Dots', 'Grid Lines', 'Gradient Overlay']
+const GRID_TYPE_OPTIONS = ['Uniform', 'Custom']
 
 function downloadDataUrl(dataUrl, filename) {
   const a = document.createElement('a')
@@ -22,6 +23,7 @@ export default function DesignPanel() {
   const {
     pageSize, customWidth, setCustomWidth, customHeight, setCustomHeight,
     gap, setGap, margin, setMargin,
+    gridType, setGridType, regenerateCustomGrid,
     canvasColor, setCanvasColor, canvasPattern, setCanvasPattern,
     colors, addBrandColor, paletteOverrides,
     patternSize, setPatternSize,
@@ -138,6 +140,13 @@ export default function DesignPanel() {
         )}
       </Folder>
       <Folder title="Grid">
+        <SelectRow label="Grid Type" value={gridType} onChange={setGridType} options={GRID_TYPE_OPTIONS} />
+        {gridType === 'Custom' && (
+          // Lines only ever regenerate on an explicit trigger (switching
+          // into Custom fresh, Shuffle, or this button) — never just from
+          // editing content. Locked lines are unaffected either way.
+          <ActionButton icon={Renew} label="Regenerate Lines" onClick={regenerateCustomGrid} />
+        )}
         <SliderRow label="Gap" value={gap} min={0} max={48} unit="px" onChange={setGap} />
         <SliderRow label="Margin" value={margin} min={0} max={48} unit="px" onChange={setMargin} />
       </Folder>
