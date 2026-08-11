@@ -13,11 +13,12 @@ function clamp(n, lo, hi) {
 // MIN_TRACK_PX. "Resizing the two adjacent tracks inversely" falls out for
 // free from this — moving one line's position only ever changes the size of
 // the two tracks it directly borders, recomputed fresh by linesToTrackSizes.
-export function useGridLineDrag({ grid, scale, customGridLines, updateGridLine, artboardRef }) {
+export function useGridLineDrag({ grid, scale, customGridLines, updateGridLine, artboardRef, pushHistory }) {
   function startDrag(e, line) {
     e.stopPropagation()
     e.preventDefault()
     if (line.locked) return
+    pushHistory()
 
     const usablePx = line.axis === 'col' ? grid.usableWidth : grid.usableHeight
     const startClient = line.axis === 'col' ? e.clientX : e.clientY
@@ -49,6 +50,7 @@ export function useGridLineDrag({ grid, scale, customGridLines, updateGridLine, 
     e.stopPropagation()
     e.preventDefault()
     if (line.locked) return
+    pushHistory()
 
     withDragListeners((ev) => {
       const rect = artboardRef.current.getBoundingClientRect()

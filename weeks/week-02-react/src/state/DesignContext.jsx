@@ -7,8 +7,12 @@ import { shuffleDesign } from '../canvas/shuffleEngine.js'
 
 const DesignContext = createContext(null)
 
+function clamp(n, lo, hi) {
+  return Math.min(hi, Math.max(lo, n))
+}
+
 function emptySpeaker() {
-  return { image: null, title: '', role: '', company: '' }
+  return { image: null, title: '', role: '', company: '', captionPosition: 'Below' }
 }
 
 export function DesignProvider({ children }) {
@@ -94,8 +98,8 @@ export function DesignProvider({ children }) {
   )
   const baseGrid = useMemo(() => {
     if (gridType !== 'Custom') return baseUniformGrid
-    const colSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'col'), baseUniformGrid.usableWidth)
-    const rowSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'row'), baseUniformGrid.usableHeight)
+    const colSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'col'), baseUniformGrid.usableWidth, baseUniformGrid.gapPx)
+    const rowSizes = linesToTrackSizes(customGridLines.filter((l) => l.axis === 'row'), baseUniformGrid.usableHeight, baseUniformGrid.gapPx)
     return applyCustomTrackSizes(baseUniformGrid, colSizes, rowSizes)
   }, [baseUniformGrid, gridType, customGridLines])
 
@@ -125,6 +129,14 @@ export function DesignProvider({ children }) {
   function updateImage(patch) {
     setImage((s) => ({ ...s, ...patch }))
   }
+  // Patches one speaker by index — used both by the Content tab (ImageSection/
+  // SpeakerRow) and by the info block's own selection panel/on-canvas resize
+  // (SpeakerInfoPanel.jsx, useSpeakerInfoDrag.js), since the info block's
+  // size/rotation/style live on the speaker object rather than a placement
+  // (see speakerInfoLayout.js — it's never itself a stored placement).
+  function updateSpeaker(index, patch) {
+    setImage((s) => ({ ...s, speakers: s.speakers.map((sp, i) => (i === index ? { ...sp, ...patch } : sp)) }))
+  }
 
   // "Element count" the Custom grid's line generator scales with — the same
   // filled-field filter shuffleEngine.js's own per-field loop already applies.
@@ -138,11 +150,13 @@ export function DesignProvider({ children }) {
   // remove — see Canvas.jsx) — independent of the algorithmic generator
   // above, same "user's explicit edit" precedent as a dragged/locked line.
   function addGridLine(axis, position) {
+    pushHistory()
     const line = createGridLine(axis, position)
     setCustomGridLines((prev) => [...prev, line])
     return line.id
   }
   function removeGridLine(id) {
+    pushHistory()
     setCustomGridLines((prev) => prev.filter((l) => l.id !== id))
   }
 
@@ -195,11 +209,12 @@ export function DesignProvider({ children }) {
           alignV: existing?.alignV ?? 'middle',
           fillMode: existing?.fillMode ?? 'Fill Width/Height',
           imageScale: existing?.imageScale ?? 100,
-          preset: existing?.preset,
+          halftone: existing?.halftone ?? true,
           preserveColor: existing?.preserveColor,
           dither: existing?.dither,
           brightness: existing?.brightness,
           contrast: existing?.contrast,
+          tintStrength: existing?.tintStrength,
         },
       }
     })
@@ -239,6 +254,7 @@ export function DesignProvider({ children }) {
   function toggleElementLock(key) {
     const placement = placements[key]
     if (!placement) return
+    pushHistory()
     const nextLocked = !placement.locked
     updatePlacement(key, { locked: nextLocked })
     if (nextLocked && gridType === 'Custom') {
@@ -251,12 +267,81 @@ export function DesignProvider({ children }) {
     }
   }
 
+  // General undo (Ctrl/Cmd+Z — see Canvas.jsx) for the canvas's structural
+  // state: placements, and the Custom grid's own lines/type. Deliberately
+  // NOT content/image/colors/canvas-background settings (those change on
+  // every keystroke/slider-tick and aren't part of what was asked — undoing
+  // element moves/deletes/duplicates/rotates, not text edits).
+  //
+  // pushHistory() must be called explicitly, exactly once per logical
+  // action, by whoever performs it — a drag hook calls it once at the START
+  // of a gesture (before its first updatePlacement), not per pointermove
+  // frame, so a whole drag collapses into one undo step; a discrete action
+  // (delete, duplicate, R-key rotate, add, lock toggle) calls it once right
+  // before its own mutation. This was originally a time-based heuristic
+  // (push whatever changed more than N ms ago) instead of explicit calls,
+  // but that coalesced genuinely separate fast actions together — e.g.
+  // Add Line immediately followed by Ctrl+D landed within the same window,
+  // so one Ctrl+Z undid BOTH instead of just the duplicate. Explicit calls
+  // have no such timing-dependent surprise, at the cost of every mutator
+  // needing its own call.
+  const historyStackRef = useRef([])
+  function pushHistory() {
+    historyStackRef.current.push({ placements, customGridLines, gridType })
+    if (historyStackRef.current.length > 50) historyStackRef.current.shift()
+  }
+
+  function undo() {
+    const snap = historyStackRef.current.pop()
+    if (!snap) return
+    setPlacements(snap.placements)
+    setCustomGridLines(snap.customGridLines)
+    setGridTypeState(snap.gridType)
+  }
+
+  // Duplicates a selected Assets-tab item (image asset or Line — anything
+  // isAsset: true, same "free-standing decoration" class Backspace/Delete
+  // already targets) directly next to itself so it reads as a fresh copy
+  // rather than sitting exactly on top of the original. A Line has no row/
+  // col to shift (its geometry is grid-corner indices — see lineGeometry.js)
+  // so it gets its own shift math; everything else shifts by one cell.
+  function duplicatePlacement(key) {
+    const original = placements[key]
+    if (!original || !original.isAsset) return null
+    pushHistory()
+    const newKey = `${key}-copy-${Date.now()}-${Math.random()}`
+    let patch
+    if (original.role === 'line') {
+      const maxCol = baseGrid.colSizes.length
+      const maxRow = baseGrid.rowSizes.length
+      const shiftCol = Math.max(original.x1Idx, original.x2Idx) < maxCol ? 1 : -1
+      const shiftRow = Math.max(original.y1Idx, original.y2Idx) < maxRow ? 1 : -1
+      patch = {
+        x1Idx: clamp(original.x1Idx + shiftCol, 0, maxCol),
+        y1Idx: clamp(original.y1Idx + shiftRow, 0, maxRow),
+        x2Idx: clamp(original.x2Idx + shiftCol, 0, maxCol),
+        y2Idx: clamp(original.y2Idx + shiftRow, 0, maxRow),
+      }
+    } else {
+      patch = {
+        col: clamp(original.col + 1, 0, baseGrid.cols - original.colSpan),
+        row: clamp(original.row + 1, 0, baseGrid.rows - original.rowSpan),
+      }
+    }
+    setPlacements((prev) => ({
+      ...prev,
+      [newKey]: { ...original, fieldKey: newKey, locked: false, manual: true, ...patch },
+    }))
+    return newKey
+  }
+
   // Assets-tab items (locked library assets + user uploads) place themselves
   // directly onto the canvas grid on "Add", using the same first-fit scan the
   // content-field placement engine uses — but keyed/flagged separately
   // (isAsset: true) since they aren't driven by a Content-tab field and must
   // survive usePlacementEngine's per-field reconciliation untouched.
   function addAssetPlacement({ key, imageUrl, glyph, name, size }) {
+    pushHistory()
     setPlacements((prev) => {
       if (prev[key]) return prev
       const occupancy = buildOccupancy(prev, baseGrid)
@@ -282,12 +367,42 @@ export function DesignProvider({ children }) {
     })
   }
   function removeAssetPlacement(key) {
+    if (!placements[key]) return
+    pushHistory()
     setPlacements((prev) => {
       if (!prev[key]) return prev
       const next = { ...prev }
       delete next[key]
       return next
     })
+  }
+
+  // A Line (canvas/elements/LineElement.jsx) is the one placement whose two
+  // ends are independently draggable to any grid corner (see lineGeometry.js/
+  // useLineDrag.js) instead of living in a single row/col cell like every
+  // other placement — its endpoints are stored as grid corner boundary
+  // INDICES (0..cols for x, 0..rows for y) rather than a pixel or fraction,
+  // so a line stays snapped to a real corner even as the grid itself changes
+  // shape (gap/margin/page-size), the same way row/col already survive that
+  // for every other element. isAsset: true reuses the same "free-standing
+  // decoration, not tied to a Content-tab field" behavior every other asset
+  // already gets — deletable via Backspace/Delete (Canvas.jsx), swept from
+  // usePlacementEngine's field-driven reconciliation.
+  function addLinePlacement() {
+    pushHistory()
+    const key = `line-${Date.now()}-${Math.random()}`
+    const cols = baseGrid.colSizes.length
+    const rows = baseGrid.rowSizes.length
+    setPlacements((prev) => ({
+      ...prev,
+      [key]: {
+        fieldKey: key, role: 'line', isAsset: true, manual: true, locked: false,
+        x1Idx: Math.round(cols * 0.25), y1Idx: Math.round(rows * 0.25),
+        x2Idx: Math.round(cols * 0.75), y2Idx: Math.round(rows * 0.75),
+        strokeWidth: 2, strokeStyle: 'Solid', colorOverride: null,
+      },
+    }))
+    return key
   }
 
   // One-step Shuffle undo: a ref (not state) since restoring it doesn't need
@@ -401,9 +516,10 @@ export function DesignProvider({ children }) {
     pixelWidth, pixelHeight, baseGrid,
     artboardRef,
     content, updateContent,
-    image, updateImage, setBackgroundImage,
+    image, updateImage, updateSpeaker, setBackgroundImage,
     placements, setPlacements, updatePlacement, toggleElementLock,
-    addAssetPlacement, removeAssetPlacement,
+    addAssetPlacement, removeAssetPlacement, addLinePlacement,
+    undo, pushHistory, duplicatePlacement,
     selectedKey, setSelectedKey,
     inspectorOpen, selectAndInspect,
     shuffle, undoShuffle, canUndoShuffle, dismissShuffleToast,

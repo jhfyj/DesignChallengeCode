@@ -317,8 +317,12 @@ function shuffleAssets(prevPlacements, grid, occupancy) {
     if (!p.isAsset) continue
     // A locked asset (upload or manually-placed library item) keeps its
     // exact spot across a shuffle — same rule as locked content fields
-    // below, its cells are already reserved in `occupancy` up front.
-    if (p.locked) {
+    // below, its cells are already reserved in `occupancy` up front. A Line
+    // is user-authored content like an upload, not randomly-appearing decor
+    // like a locked-library asset, so it always survives too — it has no
+    // row/col cell to re-place anyway (see lineGeometry.js), only grid
+    // corner indices, which stay valid as-is.
+    if (p.locked || p.role === 'line') {
       next[key] = { ...p }
       continue
     }
@@ -390,8 +394,8 @@ export function shuffleDesign({
   const workingPlacementGrid = newGridType === 'Custom'
     ? applyCustomTrackSizes(
         baseGrid,
-        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'col'), baseGrid.usableWidth),
-        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'row'), baseGrid.usableHeight),
+        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'col'), baseGrid.usableWidth, baseGrid.gapPx),
+        linesToTrackSizes(newCustomGridLines.filter((l) => l.axis === 'row'), baseGrid.usableHeight, baseGrid.gapPx),
       )
     : baseGrid
 
@@ -548,8 +552,12 @@ export function shuffleDesign({
       rotation: pickRotation(null), manual: true,
       alignH: pickAlignH(), alignV: pickAlignV(),
       fillMode: prev.fillMode ?? 'Fill Width/Height', imageScale: prev.imageScale ?? 100,
-      preset: prev.preset, preserveColor: prev.preserveColor, dither: prev.dither,
-      brightness: prev.brightness, contrast: prev.contrast,
+      // Halftone stays on across a reshuffle unless the user explicitly
+      // turned it off for this element — only ever defaults to true when
+      // there's no prior value (a field that's never been shuffled before).
+      halftone: prev.halftone ?? true,
+      preserveColor: prev.preserveColor, dither: prev.dither,
+      brightness: prev.brightness, contrast: prev.contrast, tintStrength: prev.tintStrength,
     }
   }
 

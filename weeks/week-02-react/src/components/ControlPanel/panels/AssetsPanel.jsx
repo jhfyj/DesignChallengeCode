@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Upload } from '@carbon/icons-react'
+import { Upload, LineThin } from '@carbon/icons-react'
 import { useDesignState } from '../../../state/DesignContext.jsx'
 import { fileToDataUrl } from '../../../utils/fileToDataUrl.js'
 import Folder from '../Folder.jsx'
@@ -40,7 +40,10 @@ export const LOCKED_ASSETS = Object.entries(lockedAssetFiles)
   })
 
 export default function AssetsPanel() {
-  const { colors, setColors, paletteOverrides, setPaletteColor, addAssetPlacement, removeAssetPlacement } = useDesignState()
+  const {
+    colors, setColors, paletteOverrides, setPaletteColor,
+    addAssetPlacement, removeAssetPlacement, addLinePlacement, selectAndInspect,
+  } = useDesignState()
   const [uploads, setUploads] = useState([])
   const [textLibraryOpen, setTextLibraryOpen] = useState(false)
   const [colorLibraryOpen, setColorLibraryOpen] = useState(false)
@@ -84,6 +87,16 @@ export default function AssetsPanel() {
     removeAssetPlacement(`upload-${id}`)
   }
 
+  // Drops a fresh Line onto the canvas, pre-selected so its panel (stroke
+  // width/style, color) and on-canvas endpoint handles are immediately
+  // visible — same "add, then land on its own controls" flow as clicking a
+  // locked-asset card, just without a card of its own to click since a Line
+  // isn't a pre-made image (see DesignContext.jsx's addLinePlacement).
+  function addLine() {
+    const key = addLinePlacement()
+    selectAndInspect(key)
+  }
+
   return (
     <div className="control-panel__sections">
       <Folder title="Branding">
@@ -107,6 +120,7 @@ export default function AssetsPanel() {
       )}
       <Folder title="Assets">
         <ActionButton icon={Upload} label="Upload" onClick={() => inputRef.current?.click()} />
+        <ActionButton icon={LineThin} label="Add Line" onClick={addLine} />
         <input
           ref={inputRef}
           type="file"

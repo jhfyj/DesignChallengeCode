@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import LockIcon from './LockIcon.jsx'
+import { rotatedBoxStyle } from './rotationLayout.js'
 
 const CORNERS = ['nw', 'ne', 'se', 'sw']
 const EDGES = ['n', 'e', 's', 'w']
@@ -65,36 +66,37 @@ function EdgeHandle({ edge, placement, onStartResize }) {
   )
 }
 
-export default function SelectionOverlay({ placement, onStartResize, onStartRotate, onToggleLock }) {
+// hideLock: the speaker info block has no lock concept of its own (locking
+// lives on its linked photo) — passing true skips rendering the button
+// entirely instead of showing a non-functional one.
+export default function SelectionOverlay({ placement, grid, onStartResize, onStartRotate, onToggleLock, hideLock = false }) {
   const boxRef = useRef(null)
-  const { row, col, colSpan, rowSpan, rotation, locked } = placement
+  const { locked } = placement
 
   return (
     <div
       ref={boxRef}
       className="selection-overlay"
-      style={{
-        gridRow: `${row + 1} / span ${rowSpan}`,
-        gridColumn: `${col + 1} / span ${colSpan}`,
-        transform: rotation ? `rotate(${rotation}deg)` : undefined,
-      }}
+      style={rotatedBoxStyle(placement, grid)}
     >
-      <button
-        type="button"
-        className={`selection-overlay__lock${locked ? ' selection-overlay__lock--locked' : ''}`}
-        onPointerDown={(e) => {
-          e.stopPropagation()
-          e.preventDefault()
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleLock()
-        }}
-        aria-label={locked ? 'Unlock element' : 'Lock element'}
-        aria-pressed={locked}
-      >
-        <LockIcon locked={locked} />
-      </button>
+      {!hideLock && (
+        <button
+          type="button"
+          className={`selection-overlay__lock${locked ? ' selection-overlay__lock--locked' : ''}`}
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleLock()
+          }}
+          aria-label={locked ? 'Unlock element' : 'Lock element'}
+          aria-pressed={locked}
+        >
+          <LockIcon locked={locked} />
+        </button>
+      )}
       {/* Locked elements skip resize/rotate entirely — the lock button above
           is the only interactive affordance until it's unlocked again. */}
       {!locked && EDGES.map((edge) => (

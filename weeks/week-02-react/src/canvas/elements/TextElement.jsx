@@ -2,6 +2,7 @@ import { FONT_BY_ROLE, FONT_WEIGHT_BY_ROLE, SWISS_FONT_BY_ROLE, colorForRole } f
 import { useFontsReady } from '../useFontsReady.js'
 import { snapToBaseline, BASELINE_PX } from '../baseline.js'
 import { measureInkBearing } from '../opticalAlign.js'
+import { rotatedBoxStyle } from '../rotationLayout.js'
 
 const JUSTIFY_BY_ALIGN_H = { left: 'flex-start', center: 'center', right: 'flex-end' }
 const ITEMS_BY_ALIGN_V = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }
@@ -10,9 +11,9 @@ const ITEMS_BY_ALIGN_V = { top: 'flex-start', middle: 'center', bottom: 'flex-en
 // to the role(s) that actually read as "display type" in this app.
 const OPTICAL_ALIGN_ROLES = new Set(['title'])
 
-export default function TextElement({ placement, text, colors, canvasColor, styleMode, selected, onPointerDown }) {
+export default function TextElement({ placement, grid, text, colors, canvasColor, styleMode, selected, onPointerDown }) {
   const fontsReady = useFontsReady() // forces one re-render once the real webfont has actually loaded
-  const { row, col, colSpan, rowSpan, role, rotation } = placement
+  const { role } = placement
   const isSwiss = styleMode === 'Swiss'
   const fontByRole = isSwiss ? SWISS_FONT_BY_ROLE : FONT_BY_ROLE
   const fontFamily = placement.fontFamily || fontByRole[role]
@@ -57,8 +58,7 @@ export default function TextElement({ placement, text, colors, canvasColor, styl
   }
 
   const style = {
-    gridRow: `${row + 1} / span ${rowSpan}`,
-    gridColumn: `${col + 1} / span ${colSpan}`,
+    ...rotatedBoxStyle(placement, grid),
     fontFamily,
     fontWeight,
     fontSize,
@@ -69,7 +69,6 @@ export default function TextElement({ placement, text, colors, canvasColor, styl
     // opticalAlign.js).
     marginLeft: inkBearing ? inkBearing : undefined,
     color,
-    transform: rotation ? `rotate(${rotation}deg)` : undefined,
     display: 'flex',
     justifyContent: JUSTIFY_BY_ALIGN_H[placement.alignH || 'left'],
     alignItems: ITEMS_BY_ALIGN_V[placement.alignV || 'top'],

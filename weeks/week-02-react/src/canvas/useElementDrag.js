@@ -12,7 +12,7 @@ function clamp(n, lo, hi) {
 // stays average-cell-size-based even on a non-uniform (Custom grid) canvas —
 // it's only a "how many cells did the pointer cross" heuristic, not a
 // correctness-critical box size, so the average is an acceptable approximation.
-export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
+export function useElementDrag({ grid, scale, updatePlacement, onSelect, pushHistory }) {
   const stepX = grid.cellWidth + grid.gapPx
   const stepY = grid.cellHeight + grid.gapPx
 
@@ -23,6 +23,9 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
     // A locked element is still selectable (so it can be unlocked again),
     // just not draggable — shuffling around it, not it, is the whole point.
     if (placement.locked) return
+    // One undo checkpoint per gesture, taken here (before the first update),
+    // not per pointermove frame — see DesignContext.jsx's pushHistory.
+    pushHistory()
     const startX = e.clientX
     const startY = e.clientY
     const { row: startRow, col: startCol, colSpan, rowSpan } = placement
@@ -61,6 +64,7 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
   function startResize(e, placement, handle = 'se') {
     e.stopPropagation()
     e.preventDefault()
+    pushHistory()
     const cfg = HANDLE_CONFIG[handle]
     const isCorner = cfg.x && cfg.y
     const startX = e.clientX
@@ -118,6 +122,7 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect }) {
   function startRotate(e, placement, boxEl) {
     e.stopPropagation()
     e.preventDefault()
+    pushHistory()
     const rect = boxEl.getBoundingClientRect()
     const centerX = rect.left + rect.width / 2
     const centerY = rect.top + rect.height / 2

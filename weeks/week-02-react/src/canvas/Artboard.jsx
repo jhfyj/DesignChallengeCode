@@ -4,9 +4,14 @@ import SelectionOverlay from './SelectionOverlay.jsx'
 import DuotoneFilter from './DuotoneFilter.jsx'
 import TextElement from './elements/TextElement.jsx'
 import ImageElement from './elements/ImageElement.jsx'
+import SpeakerInfoElement from './elements/SpeakerInfoElement.jsx'
+import LineElement from './elements/LineElement.jsx'
+import LineSelectionOverlay from './LineSelectionOverlay.jsx'
 import { hexToRgba } from './colorContrast.js'
+import { computeSpeakerInfoGeometry } from './speakerInfoLayout.js'
 
 const TEXT_ROLES = new Set(['title', 'subtitle', 'body', 'accent'])
+const INFO_KEY_RE = /^speaker-(\d+)-info$/
 
 // Dots/Grid Lines/Gradient Overlay redraw their background-image inline (not
 // as a static CSS rule) since every knob here — pattern size, per-pattern
@@ -38,7 +43,7 @@ function patternStyle(canvasPattern, config) {
 
 export default function Artboard({
   domRef, grid, placements, fieldStates, colors, canvasColor, styleMode, canvasPattern, patternConfig,
-  gridVisible, selectedKey, drag, selectAndInspect, toggleElementLock,
+  gridVisible, selectedKey, drag, infoDrag, lineDrag, selectAndInspect, toggleElementLock,
   gridType, customGridLines, gridLineDrag, onToggleLineLock,
   selectedLineId, onSelectLine, onArtboardDoubleClick,
 }) {
@@ -46,6 +51,26 @@ export default function Artboard({
   const selectedPlacement = selectedKey ? placements[selectedKey] : null
   const background = placements.background
   const overlayStyle = patternStyle(canvasPattern, patternConfig)
+
+  // The info block's own resize/rotate handles (see useSpeakerInfoDrag.js) —
+  // computed once here off selectedKey, separately from the per-placement
+  // map below, since it isn't itself a placement and needs its geometry
+  // recomputed the same way SpeakerInfoElement's does.
+  const selectedInfoMatch = selectedKey?.match(INFO_KEY_RE)
+  let selectedInfoOverlay = null
+  if (selectedInfoMatch) {
+    const speakerIndex = Number(selectedInfoMatch[1])
+    const photoKey = `speaker-${speakerIndex}`
+    const photoPlacement = placements[photoKey]
+    const field = fieldByKey[photoKey]
+    if (photoPlacement && field) {
+      const geometry = computeSpeakerInfoGeometry(photoPlacement, field.payload.captionPosition || 'Below', grid, {
+        colSpanOverride: field.payload.infoColSpanOverride,
+        rowSpanOverride: field.payload.infoRowSpanOverride,
+      })
+      if (geometry) selectedInfoOverlay = { index: speakerIndex, geometry, rotation: field.payload.infoRotation || 0 }
+    }
+  }
 
   return (
     <div
@@ -70,6 +95,7 @@ export default function Artboard({
       {background && (
         <ImageElement
           placement={background}
+          grid={grid}
           image={{ url: background.imageUrl }}
           colors={colors}
           canvasColor={canvasColor}
@@ -98,6 +124,19 @@ export default function Artboard({
       {gridType !== 'Custom' && <GridOverlay cols={grid.cols} rows={grid.rows} visible={gridVisible} />}
       {Object.values(placements).map((placement) => {
         if (placement.isBackground) return null
+        if (placement.role === 'line') {
+          return (
+            <LineElement
+              key={placement.fieldKey}
+              placement={placement}
+              grid={grid}
+              colors={colors}
+              canvasColor={canvasColor}
+              selected={placement.fieldKey === selectedKey}
+              onPointerDown={(e) => lineDrag.startMove(e, placement)}
+            />
+          )
+        }
         const field = fieldByKey[placement.fieldKey]
         if (!field && !placement.isAsset) return null
         const selected = placement.fieldKey === selectedKey
@@ -107,6 +146,7 @@ export default function Artboard({
             <TextElement
               key={placement.fieldKey}
               placement={placement}
+              grid={grid}
               text={field.payload.text}
               colors={colors}
               canvasColor={canvasColor}
@@ -117,15 +157,14 @@ export default function Artboard({
           )
         }
         const image = placement.isAsset ? { url: placement.imageUrl } : field.payload.image
-        const caption = placement.isAsset ? undefined : field.payload.caption
         const glyph = placement.isAsset ? placement.glyph : undefined
         const name = placement.isAsset ? placement.name : undefined
-        return (
+        const photoElement = (
           <ImageElement
             key={placement.fieldKey}
             placement={placement}
+            grid={grid}
             image={image}
-            caption={caption}
             glyph={glyph}
             name={name}
             colors={colors}
@@ -134,6 +173,45 @@ export default function Artboard({
             onPointerDown={onPointerDown}
           />
         )
+        if (placement.isAsset || placement.role !== 'image-card') return photoElement
+
+        // Speaker info (name/company/role) is a genuinely separate element
+        // from the photo — its own selectable box, not text laid over/inside
+        // the image — but its POSITION is never independently dragged or
+        // resized: it's recomputed from the photo's CURRENT placement on
+        // every render (see speakerInfoLayout.js), so the two can't drift
+        // apart. Its size/rotation/alignment and each line's font/color ARE
+        // independently adjustable, via its own panel (SpeakerInfoPanel.jsx).
+        const info = {
+          name: field.payload.name, company: field.payload.company, role: field.payload.role,
+          alignH: field.payload.infoAlignH, alignV: field.payload.infoAlignV, rotation: field.payload.infoRotation,
+          nameStyle: field.payload.nameStyle, companyStyle: field.payload.companyStyle, roleStyle: field.payload.roleStyle,
+        }
+        const hasInfo = info.name || info.company || info.role
+        const infoGeometry = hasInfo
+          ? computeSpeakerInfoGeometry(placement, field.payload.captionPosition || 'Below', grid, {
+              colSpanOverride: field.payload.infoColSpanOverride,
+              rowSpanOverride: field.payload.infoRowSpanOverride,
+            })
+          : null
+        if (!infoGeometry) return photoElement
+        const infoKey = `${placement.fieldKey}-info`
+        return [
+          photoElement,
+          <SpeakerInfoElement
+            key={infoKey}
+            geometry={infoGeometry}
+            grid={grid}
+            info={info}
+            colors={colors}
+            canvasColor={canvasColor}
+            selected={infoKey === selectedKey}
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              selectAndInspect(infoKey)
+            }}
+          />,
+        ]
       })}
       {gridType === 'Custom' && (
         <CustomGridOverlay
@@ -147,12 +225,34 @@ export default function Artboard({
           onToggleLock={onToggleLineLock}
         />
       )}
-      {selectedPlacement && !selectedPlacement.isBackground && (
+      {selectedPlacement && !selectedPlacement.isBackground && selectedPlacement.role !== 'line' && (
         <SelectionOverlay
           placement={selectedPlacement}
+          grid={grid}
           onStartResize={drag.startResize}
           onStartRotate={drag.startRotate}
           onToggleLock={() => toggleElementLock(selectedPlacement.fieldKey)}
+        />
+      )}
+      {selectedPlacement && selectedPlacement.role === 'line' && (
+        <LineSelectionOverlay
+          placement={selectedPlacement}
+          grid={grid}
+          onStartEndpointDrag={lineDrag.startEndpointDrag}
+          onToggleLock={() => toggleElementLock(selectedPlacement.fieldKey)}
+        />
+      )}
+      {selectedInfoOverlay && (
+        <SelectionOverlay
+          placement={{ ...selectedInfoOverlay.geometry, rotation: selectedInfoOverlay.rotation, locked: false }}
+          grid={grid}
+          hideLock
+          onStartResize={(e, _placement, handle) =>
+            infoDrag.startResize(e, selectedInfoOverlay.index, selectedInfoOverlay.geometry, handle)
+          }
+          onStartRotate={(e, _placement, boxEl) =>
+            infoDrag.startRotate(e, selectedInfoOverlay.index, selectedInfoOverlay.rotation, boxEl)
+          }
         />
       )}
     </div>

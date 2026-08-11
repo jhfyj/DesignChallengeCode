@@ -44,6 +44,16 @@
   font-weight: 600;
 }
 
+/* Speaker info panel's Name/Company/Role sections (SpeakerInfoPanel.jsx) —
+   a wider gap than control-panel__body's usual 14px baseline, since each
+   Folder here is its own collapsible unit and reads as more distinct
+   sub-sections rather than a flat run of rows. */
+.speaker-info-panel__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .details-row {
   display: flex;
   flex-shrink: 0;

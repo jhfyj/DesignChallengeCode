@@ -163,13 +163,23 @@ export function generateCustomGridLines(elementCount, baseUniformGrid, existingL
 
 // Converts one axis's sorted divider positions into actual per-track pixel
 // sizes — the array Artboard.jsx's CSS grid-template renders from directly.
-// `lines` should already be filtered to a single axis.
-export function linesToTrackSizes(lines, usablePx, minTrackPx = MIN_TRACK_PX) {
+// `lines` should already be filtered to a single axis. A `position` of e.g.
+// 0.5 means "half of the space the tracks themselves get to fill" — which is
+// usablePx MINUS the gaps the CSS `gap` property is about to insert between
+// every one of those tracks, same as the Uniform grid's own cellWidth math
+// (gridMath.js's computeGrid). Without that subtraction, the tracks'
+// fractional sizes sum to the FULL usablePx and the gaps land on top of that
+// as pure extra width, so the grid (and everything positioned in it, right
+// down to a selected element's own box) silently renders wider/taller than
+// the artboard and overflows past its true right/bottom edge.
+export function linesToTrackSizes(lines, usablePx, gapPx, minTrackPx = MIN_TRACK_PX) {
   const positions = lines.map((l) => l.position).sort((a, b) => a - b)
   const boundaries = [0, ...positions, 1]
+  const trackCount = boundaries.length - 1
+  const availablePx = Math.max(1, usablePx - (trackCount - 1) * gapPx)
   const sizes = []
   for (let i = 0; i < boundaries.length - 1; i++) {
-    sizes.push(Math.max(minTrackPx, (boundaries[i + 1] - boundaries[i]) * usablePx))
+    sizes.push(Math.max(minTrackPx, (boundaries[i + 1] - boundaries[i]) * availablePx))
   }
   return sizes
 }
@@ -183,10 +193,14 @@ export function linesToTrackSizes(lines, usablePx, minTrackPx = MIN_TRACK_PX) {
 // minTrackPx floor actually kicks in.
 export function computeLineOffsets(lines, usablePx, gapPx, minTrackPx = MIN_TRACK_PX) {
   const sorted = [...lines].sort((a, b) => a.position - b.position)
+  // Same gap-reserving math as linesToTrackSizes above — sorted.length lines
+  // split the axis into sorted.length + 1 tracks, so that many gaps end up
+  // rendered between them.
+  const availablePx = Math.max(1, usablePx - sorted.length * gapPx)
   let cumulativeTrackPx = 0
   return sorted.map((line, i) => {
     const prevPosition = i === 0 ? 0 : sorted[i - 1].position
-    const trackSize = Math.max(minTrackPx, (line.position - prevPosition) * usablePx)
+    const trackSize = Math.max(minTrackPx, (line.position - prevPosition) * availablePx)
     cumulativeTrackPx += trackSize
     return { ...line, offsetPx: cumulativeTrackPx + i * gapPx + gapPx / 2 }
   })

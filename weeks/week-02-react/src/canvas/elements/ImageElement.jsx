@@ -1,4 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import { resolveTriad, relativeLuminance, isSvgUrl } from '../colorContrast.js'
+import { getHalftoneDataUrl } from '../effects/halftone.js'
+import { rotatedBoxStyle } from '../rotationLayout.js'
 
 const H_KEYWORD = { left: 'left', center: 'center', right: 'right' }
 const V_KEYWORD = { top: 'top', middle: 'center', bottom: 'bottom' }
@@ -20,14 +23,45 @@ const DITHER_CONTRAST_BOOST = {
 // filter functions; Preserve Color off swaps in the shared brand duotone
 // filter (see DuotoneFilter.jsx) instead of the original colors.
 function photoFilter(placement) {
-  const brightness = placement.brightness ?? 24
-  const contrast = placement.contrast ?? 24
+  const brightness = placement.brightness ?? 50
+  const contrast = placement.contrast ?? 50
   const dither = placement.dither || 'Low'
   const preserveColor = placement.preserveColor ?? true
   const boost = (preserveColor ? DITHER_CONTRAST_BOOST.preserve : DITHER_CONTRAST_BOOST.duotone)[dither]
   const parts = [`brightness(${brightness / 100 + 0.5})`, `contrast(${(contrast / 100 + 0.5) * boost})`]
   if (!preserveColor) parts.push('url(#duotone-filter)')
   return parts.join(' ')
+}
+
+// Halftone bakes the effect into the pixels themselves (see effects/halftone.js),
+// so it needs its own async load rather than a live CSS filter string. Falls
+// back to the original image until the processed version is ready. The
+// recompute is debounced so dragging the Brightness/Contrast/Tint sliders
+// (which fire onChange continuously) doesn't re-run the per-pixel pass on
+// every intermediate value — only once the drag settles.
+const HALFTONE_DEBOUNCE_MS = 120
+
+function useHalftoneImage(url, active, brightness, contrast, tintStrength) {
+  const [processedUrl, setProcessedUrl] = useState(null)
+  const timerRef = useRef(null)
+  useEffect(() => {
+    if (!active || !url) {
+      setProcessedUrl(null)
+      return
+    }
+    let cancelled = false
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      getHalftoneDataUrl(url, { brightness, contrast, tintStrength }).then((result) => {
+        if (!cancelled) setProcessedUrl(result)
+      })
+    }, HALFTONE_DEBOUNCE_MS)
+    return () => {
+      cancelled = true
+      clearTimeout(timerRef.current)
+    }
+  }, [url, active, brightness, contrast, tintStrength])
+  return active ? processedUrl : null
 }
 
 // The image itself is never stretched off-ratio in any mode — only how much
@@ -64,8 +98,8 @@ function imageStyleForFillMode(fillMode, alignH, alignV, imageScale) {
   }
 }
 
-export default function ImageElement({ placement, image, caption, glyph, name, colors, canvasColor, selected, onPointerDown }) {
-  const { row, col, colSpan, rowSpan, role, rotation, fillMode, imageScale } = placement
+export default function ImageElement({ placement, grid, image, glyph, name, colors, canvasColor, selected, onPointerDown }) {
+  const { role, fillMode, imageScale } = placement
   const alignH = placement.alignH || 'left'
   const alignV = placement.alignV || 'top'
   // The background image isn't a grid cell — it covers the whole canvas
@@ -81,18 +115,22 @@ export default function ImageElement({ placement, image, caption, glyph, name, c
         alignItems: ITEMS_BY_ALIGN_V[alignV],
       }
     : {
-        gridRow: `${row + 1} / span ${rowSpan}`,
-        gridColumn: `${col + 1} / span ${colSpan}`,
-        transform: rotation ? `rotate(${rotation}deg)` : undefined,
+        ...rotatedBoxStyle(placement, grid),
         display: 'flex',
         justifyContent: JUSTIFY_BY_ALIGN_H[alignH],
         alignItems: ITEMS_BY_ALIGN_V[alignV],
       }
   const className = `canvas-element canvas-element--${role}${selected ? ' is-selected' : ''}`
   const hasImage = Boolean(image?.url)
+  const isHalftone = PHOTO_ROLES.has(role) && (placement.halftone ?? true)
+  const halftoneUrl = useHalftoneImage(
+    image?.url, isHalftone,
+    placement.brightness ?? 50, placement.contrast ?? 50, placement.tintStrength ?? 100,
+  )
+  const displayUrl = (isHalftone && halftoneUrl) || image?.url
   const imgStyle = imageStyleForFillMode(fillMode || 'Fill Width/Height', alignH, alignV, imageScale)
-  if (PHOTO_ROLES.has(role)) imgStyle.filter = photoFilter(placement)
-  const { light, mid, dark } = resolveTriad(colors)
+  if (PHOTO_ROLES.has(role) && !isHalftone) imgStyle.filter = photoFilter(placement)
+  const { light, dark } = resolveTriad(colors)
   // Locked-asset SVGs (logo marks) are treated as monochrome icons, not
   // photos: they're masked (alpha channel only, ignoring whatever colors are
   // baked into the file) and tinted to whichever swatch reads against the
@@ -130,7 +168,7 @@ export default function ImageElement({ placement, image, caption, glyph, name, c
       )}
       {hasImage && !isLogoMark && (
         <img
-          src={image.url}
+          src={displayUrl}
           alt=""
           className="canvas-element__image"
           draggable={false}
@@ -148,9 +186,6 @@ export default function ImageElement({ placement, image, caption, glyph, name, c
         >
           {glyph || name}
         </span>
-      )}
-      {role === 'image-card' && caption && (
-        <span className="canvas-element__caption" style={{ color: mid }}>{caption}</span>
       )}
     </div>
   )

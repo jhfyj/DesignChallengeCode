@@ -50,8 +50,21 @@
   color: var(--color-text-primary);
 }
 
+/* Sized in Canvas.jsx as the artboard's own on-screen size PLUS a buffer
+   (HANDLE_OVERHANG, scale-aware) on every side, with that same buffer as
+   padding — so overflow:hidden clips a bit outside the artboard's true
+   edge instead of flush against it. Without this, a selected element's
+   resize/rotate handles (SelectionOverlay.jsx) get visibly cut off whenever
+   the element sits at the artboard's right/bottom edge, since their handles
+   are drawn hanging outside the element's own box. */
 .artboard-viewport {
   overflow: hidden;
+}
+
+/* Exactly the artboard's own on-screen size (no overhang buffer) — carries
+   the shadow so it still hugs the artboard tightly instead of floating a
+   gap away from it inside .artboard-viewport's new buffer padding. */
+.artboard-shadow-box {
   box-shadow: var(--shadow-elevated-lg);
 }
 
@@ -63,7 +76,7 @@
   position: relative;
   display: grid;
   background: var(--color-canvas-default-bg);
-  box-sizing: content-box;
+  box-sizing: border-box;
 }
 
 /* Canvas background pattern/gradient overlay (Design > Canvas) — a sibling
@@ -295,9 +308,36 @@
   display: block;
 }
 
-.canvas-element--image-card {
+/* Speaker info block (SpeakerInfoElement.jsx) — a genuinely separate grid
+   item from its linked photo, not text laid over/inside it. Its own cell
+   (see speakerInfoLayout.js) is sized by the grid track, same as any other
+   element; this just lays its three lines out top-to-bottom within it. */
+.canvas-element--speaker-info {
   display: flex;
   flex-direction: column;
+  /* justify-content/align-items (vertical/horizontal alignment) and any
+     rotation come from inline style — user-adjustable per speaker via
+     SpeakerInfoPanel.jsx (info.alignV/alignH/rotation). */
+  gap: 1px;
+  padding: 4px 6px;
+  /* Selectable (for the outline), but never draggable — its position is
+     always derived from the photo, so "grab" would be a false affordance. */
+  cursor: pointer;
+}
+
+/* Name > company > role hierarchy: each step down in weight, size, and
+   color intensity by default (see SpeakerInfoElement.jsx) — font-family/
+   size/weight/color are all inline (user-overridable per line), only the
+   structural rules live here. Wraps to fill the box instead of truncating —
+   same wrap behavior as a normal text element (.canvas-element above), so
+   resizing the block behaves the way resizing any other text box does. */
+.canvas-element__info-name,
+.canvas-element__info-company,
+.canvas-element__info-role {
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Selection overlay: shares the same grid-row/grid-column as the selected
@@ -424,16 +464,83 @@
   background: var(--gray-950);
 }
 
-.canvas-element__caption {
+/* Line element (LineElement.jsx) — an <svg> spanning just the grid's usable
+   content box (same box CustomGridOverlay's lines live in), absolutely
+   positioned so its two endpoints can sit anywhere on the grid-corner
+   lattice rather than being confined to a single CSS grid cell like every
+   other placement. */
+/* pointer-events: none on the root — an inline <svg> otherwise hit-tests
+   across its whole rectangular bounding box (even fully transparent area),
+   not just its painted contents, which for a diagonal line would swallow
+   clicks meant for anything else under that much larger box. Only
+   .canvas-line__hit (below) re-enables hit-testing, scoped to the actual
+   line stroke. */
+.canvas-line {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 4px 6px;
-  background: var(--overlay-caption-scrim);
-  font-family: 'Figtree', sans-serif;
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  pointer-events: none;
+  touch-action: none;
 }
+
+/* Invisible wide hit-stroke so a thin line is still easy to grab — same
+   trick as CustomGridOverlay.jsx's own divider lines. */
+.canvas-line__hit {
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: grab;
+  touch-action: none;
+}
+.canvas-line.is-locked .canvas-line__hit {
+  cursor: default;
+}
+
+.canvas-line__stroke {
+  stroke-linecap: butt;
+}
+
+/* Selection indicator: a soft accent-colored halo behind the real stroke,
+   since a thin diagonal line has no box to draw a rectangular outline
+   around the way .canvas-element.is-selected does. */
+.canvas-line__halo {
+  stroke: var(--color-accent);
+  opacity: 0.35;
+}
+
+/* Endpoint handles (LineSelectionOverlay.jsx) — the only drag handles on the
+   canvas that snap to a full 2D grid corner instead of a single grid-cell
+   step (see useLineDrag.js/lineGeometry.js), which is what lets a Line run
+   diagonally. Same dot styling as CustomGridOverlay's line-end handles. */
+.line-selection__handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  padding: 0;
+  transform: translate(-50%, -50%);
+  cursor: move;
+  pointer-events: auto;
+}
+
+.line-selection__lock {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--white);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.line-selection__lock[aria-pressed='true'] {
+  background: var(--gray-950);
+}
+

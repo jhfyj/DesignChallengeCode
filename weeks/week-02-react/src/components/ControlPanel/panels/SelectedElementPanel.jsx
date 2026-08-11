@@ -11,6 +11,8 @@ import SingleColorRow from '../SingleColorRow.jsx'
 import AlignmentRow from '../AlignmentRow.jsx'
 import ToggleRow from '../ToggleRow.jsx'
 import SegmentedRow from '../SegmentedRow.jsx'
+import SpeakerInfoPanel from './SpeakerInfoPanel.jsx'
+import LinePanel from './LinePanel.jsx'
 
 const TEXT_ROLES = new Set(['title', 'subtitle', 'body', 'accent'])
 // Photo elements (keynote/speaker images) get the preset filter + Details
@@ -19,18 +21,16 @@ const TEXT_ROLES = new Set(['title', 'subtitle', 'body', 'accent'])
 // tech@nyu logo mark isn't a photo that wants brightness/dither controls.
 const PHOTO_ROLES = new Set(['image-hero', 'image-card', 'background'])
 const DITHER_OPTIONS = ['Low', 'Med', 'High']
-// Selecting a preset applies this whole bundle to Details at once; each
-// Details control stays independently editable afterward.
-const PRESETS = {
-  None: { preserveColor: true, dither: 'Low', brightness: 50, contrast: 50 },
-  'Preset 1': { preserveColor: true, dither: 'Low', brightness: 24, contrast: 24 },
-  'Preset 2': { preserveColor: false, dither: 'Med', brightness: 50, contrast: 60 },
-  'Preset 3': { preserveColor: false, dither: 'High', brightness: 40, contrast: 75 },
-}
-const PRESET_OPTIONS = Object.keys(PRESETS)
+// Halftone (see canvas/effects/halftone.js) is the default treatment for
+// every photo — None reverts to the plain image with neutral CSS
+// brightness/contrast. Driven straight off placement.halftone rather than a
+// separate stored "preset" string, so shuffle/upload defaults and this
+// dropdown can never disagree about which one is active.
+const PRESET_OPTIONS = ['Halftone', 'None']
+const NONE_PRESET_PATCH = { halftone: false, preserveColor: true, dither: 'Low', brightness: 50, contrast: 50 }
 const ROLE_DISPLAY = { title: 'Header', subtitle: 'Header', body: 'Body', accent: 'Accent' }
 const ROLE_FROM_DISPLAY = { Header: 'title', Body: 'body', Accent: 'accent' }
-const SIZE_PRESETS = [12, 14, 16, 20, 24, 32, 36, 40, 48, 56, 64]
+export const SIZE_PRESETS = [12, 14, 16, 20, 24, 32, 36, 40, 48, 56, 64]
 const EDITABLE_CONTENT_FIELD = { title: 'title', subtitle: 'subtitle', description: 'description' }
 // Mirrors Figma's image-fill model: "Fill Width/Height" is Figma's Fill
 // (scale-to-cover, crop overflow), "Fill Width"/"Fill Height" pin one axis
@@ -54,8 +54,24 @@ export default function SelectedElementPanel() {
     pageSize, customWidth, customHeight, gap, margin, colors, addBrandColor, paletteOverrides, canvasColor, content, updateContent, styleMode,
   } = useDesignState()
 
+  // The speaker info block (name/company/role) is never itself a stored
+  // placement — its position is derived from the photo every render (see
+  // speakerInfoLayout.js) — so it has its own panel keyed off the "-info"
+  // suffix (Artboard.jsx) instead of falling through to the placement-driven
+  // logic below.
+  if (selectedKey?.endsWith('-info')) {
+    return <SpeakerInfoPanel infoKey={selectedKey} />
+  }
+
   const placement = placements[selectedKey]
   if (!placement) return null
+
+  // A Line has no row/col/colSpan/rowSpan (its geometry is two grid-corner
+  // indices — see lineGeometry.js) so it can't fall through to the generic
+  // placement-driven UI below, same reasoning as the SpeakerInfo branch above.
+  if (placement.role === 'line') {
+    return <LinePanel selectedKey={selectedKey} placement={placement} />
+  }
 
   const { width, height } = getPageDimensions(pageSize, customWidth, customHeight)
   const grid = computeGrid(width, height, gap, margin)
@@ -107,9 +123,9 @@ export default function SelectedElementPanel() {
 
       {isPhoto && (
         <SelectRow
-          value={placement.preset || 'Preset 1'}
+          value={(placement.halftone ?? true) ? 'Halftone' : 'None'}
           options={PRESET_OPTIONS}
-          onChange={(v) => updatePlacement(selectedKey, { preset: v, ...PRESETS[v] })}
+          onChange={(v) => updatePlacement(selectedKey, v === 'Halftone' ? { halftone: true } : NONE_PRESET_PATCH)}
         />
       )}
 
@@ -253,35 +269,71 @@ export default function SelectedElementPanel() {
 
       {isPhoto && (
         <Folder title="Details">
-          <SegmentedRow
-            label="Dither"
-            value={placement.dither || 'Low'}
-            options={DITHER_OPTIONS}
-            onChange={(dither) => updatePlacement(selectedKey, { dither })}
-          />
-          <ToggleRow
-            label="Preserve Color"
-            value={placement.preserveColor ?? true}
-            onChange={(preserveColor) => updatePlacement(selectedKey, { preserveColor })}
-          />
-          <SliderRow
-            label="Brightness"
-            value={placement.brightness ?? 24}
-            min={0}
-            max={100}
-            step={1}
-            unit="%"
-            onChange={(brightness) => updatePlacement(selectedKey, { brightness })}
-          />
-          <SliderRow
-            label="Contrast"
-            value={placement.contrast ?? 24}
-            min={0}
-            max={100}
-            step={1}
-            unit="%"
-            onChange={(contrast) => updatePlacement(selectedKey, { contrast })}
-          />
+          {(placement.halftone ?? true) ? (
+            <>
+              <SliderRow
+                label="Tint"
+                value={placement.tintStrength ?? 100}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+                // 0% is a plain black/white halftone; 100% is the full
+                // black-through-tint-through-white gradient (see halftone.js).
+                onChange={(tintStrength) => updatePlacement(selectedKey, { tintStrength })}
+              />
+              <SliderRow
+                label="Brightness"
+                value={placement.brightness ?? 50}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+                onChange={(brightness) => updatePlacement(selectedKey, { brightness })}
+              />
+              <SliderRow
+                label="Contrast"
+                value={placement.contrast ?? 50}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+                onChange={(contrast) => updatePlacement(selectedKey, { contrast })}
+              />
+            </>
+          ) : (
+            <>
+              <SegmentedRow
+                label="Dither"
+                value={placement.dither || 'Low'}
+                options={DITHER_OPTIONS}
+                onChange={(dither) => updatePlacement(selectedKey, { dither })}
+              />
+              <ToggleRow
+                label="Preserve Color"
+                value={placement.preserveColor ?? true}
+                onChange={(preserveColor) => updatePlacement(selectedKey, { preserveColor })}
+              />
+              <SliderRow
+                label="Brightness"
+                value={placement.brightness ?? 50}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+                onChange={(brightness) => updatePlacement(selectedKey, { brightness })}
+              />
+              <SliderRow
+                label="Contrast"
+                value={placement.contrast ?? 50}
+                min={0}
+                max={100}
+                step={1}
+                unit="%"
+                onChange={(contrast) => updatePlacement(selectedKey, { contrast })}
+              />
+            </>
+          )}
         </Folder>
       )}
     </>

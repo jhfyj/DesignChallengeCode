@@ -108,7 +108,42 @@ export function buildFieldStates(content, image) {
         key: `speaker-${i}`,
         role: 'image-card',
         filled: speaker.image != null,
-        payload: { image: speaker.image, caption: speaker.title || speaker.role || speaker.company || '' },
+        // title is the speaker's name — the card's biggest, most prominent
+        // line (see ImageElement.jsx's canvas-element__info-name); company
+        // and role follow at decreasing size/weight/color intensity.
+        // captionPosition, the info block's own rotation/size/alignment, and
+        // each line's font/color are all authored per-speaker (Content tab /
+        // the info block's own selection panel — SpeakerInfoPanel.jsx)
+        // rather than living on the canvas placement — the info block is
+        // never itself a stored placement (see speakerInfoLayout.js), so
+        // this is its only home.
+        payload: {
+          image: speaker.image, name: speaker.title, company: speaker.company, role: speaker.role,
+          captionPosition: speaker.captionPosition || 'Below',
+          infoRotation: speaker.infoRotation || 0,
+          infoColSpanOverride: speaker.infoColSpanOverride ?? null,
+          infoRowSpanOverride: speaker.infoRowSpanOverride ?? null,
+          infoAlignH: speaker.infoAlignH || 'left',
+          infoAlignV: speaker.infoAlignV || 'middle',
+          nameStyle: {
+            fontFamily: speaker.nameFontFamily || null,
+            fontWeight: speaker.nameFontWeight || null,
+            fontSizeOverride: speaker.nameFontSizeOverride || null,
+            colorOverride: speaker.nameColorOverride || null,
+          },
+          companyStyle: {
+            fontFamily: speaker.companyFontFamily || null,
+            fontWeight: speaker.companyFontWeight || null,
+            fontSizeOverride: speaker.companyFontSizeOverride || null,
+            colorOverride: speaker.companyColorOverride || null,
+          },
+          roleStyle: {
+            fontFamily: speaker.roleFontFamily || null,
+            fontWeight: speaker.roleFontWeight || null,
+            fontSizeOverride: speaker.roleFontSizeOverride || null,
+            colorOverride: speaker.roleColorOverride || null,
+          },
+        },
       })
     })
   }

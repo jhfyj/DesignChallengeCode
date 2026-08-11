@@ -75,13 +75,20 @@ export function usePlacementEngine(fieldStates, grid, styleMode) {
         // re-place fresh into the new shape below.
         for (const key of Object.keys(prev)) {
           const p = prev[key]
-          if (p.manual) {
-            const colSpan = Math.min(p.colSpan, grid.cols)
-            const rowSpan = Math.min(p.rowSpan, grid.rows)
-            const col = clamp(p.col, 0, grid.cols - colSpan)
-            const row = clamp(p.row, 0, grid.rows - rowSpan)
-            next[key] = { ...p, col, row, colSpan, rowSpan }
+          if (!p.manual) continue
+          // A Line has no row/col/colSpan/rowSpan to clamp — its geometry is
+          // two grid-corner indices (lineGeometry.js), which stay meaningful
+          // as-is (clamped to range only at render time) across a track-size
+          // change, unlike a cell-based placement's span.
+          if (p.role === 'line') {
+            next[key] = { ...p }
+            continue
           }
+          const colSpan = Math.min(p.colSpan, grid.cols)
+          const rowSpan = Math.min(p.rowSpan, grid.rows)
+          const col = clamp(p.col, 0, grid.cols - colSpan)
+          const row = clamp(p.row, 0, grid.rows - rowSpan)
+          next[key] = { ...p, col, row, colSpan, rowSpan }
         }
       } else {
         next = { ...prev }
@@ -163,9 +170,12 @@ export function usePlacementEngine(fieldStates, grid, styleMode) {
             alignV: 'top',
             // Image-only fields (keynoteImage/speaker-N) ignore these, but
             // setting them here means switching an already-placed image's
-            // Fill mode always has a defined starting point.
+            // Fill mode always has a defined starting point. Halftone is the
+            // default treatment for every freshly-uploaded photo — the user
+            // opts out per-element via the preset dropdown (SelectedElementPanel.jsx).
             fillMode: 'Fill Width/Height',
             imageScale: 100,
+            halftone: true,
           }
         } else if (!field.filled && wasFilled) {
           delete next[field.key]
