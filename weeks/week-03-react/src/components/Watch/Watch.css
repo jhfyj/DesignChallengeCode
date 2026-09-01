@@ -1,0 +1,104 @@
+.watch {
+  --case-size: min(78vmin, 360px);
+  position: relative;
+  width: var(--case-size);
+  height: var(--case-size);
+}
+
+/* --- straps, cropped at the edge of the stage like a lifestyle shot --- */
+.watch__band {
+  position: absolute;
+  left: 50%;
+  width: calc(var(--case-size) * 0.62);
+  height: 46vh;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #1c1e24, #303339 45%, #1c1e24);
+  border-left: 1px solid #3a3d44;
+  border-right: 1px solid #3a3d44;
+  z-index: 0;
+}
+
+.watch__band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-y;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.04) 0,
+    rgba(255, 255, 255, 0.04) 2px,
+    transparent 2px,
+    transparent 14px
+  );
+}
+
+.watch__band--top {
+  bottom: calc(50% + var(--case-size) * 0.42);
+  border-radius: 18px 18px 0 0;
+}
+
+.watch__band--bottom {
+  top: calc(50% + var(--case-size) * 0.42);
+  border-radius: 0 0 18px 18px;
+}
+
+/* --- case --- */
+.watch__case {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 210deg,
+    #2a2d33,
+    #4a4e57 20%,
+    #1c1e22 45%,
+    #55595f 65%,
+    #26282d 85%,
+    #2a2d33
+  );
+  box-shadow:
+    0 30px 60px -15px rgba(0, 0, 0, 0.7),
+    0 10px 24px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.watch__bezel {
+  width: 92%;
+  height: 92%;
+  border-radius: 50%;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.06),
+    inset 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.watch__screen {
+  position: relative;
+  width: 94%;
+  height: 94%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #16181c 0%, #050506 72%, #000 100%);
+  overflow: hidden;
+  /* Lets the Figma-matched screens (Processing/Listening/DirectionCard) size
+     every value off the screen's own rendered width in `cqw`, so a value
+     lifted straight from the 1072px Figma frame (e.g. a 48px title) becomes
+     `calc(48 / 10.72 * 1cqw)` and stays pixel-proportional at any case size
+     instead of needing a JS-measured pixel width. */
+  container-type: inline-size;
+  container-name: watch-screen;
+}
+
+.watch-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

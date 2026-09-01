@@ -1,0 +1,98 @@
+/* Same glass/ring treatment as ProcessingScreen.css — every value here is
+   copied from there rather than approximated, so the two screens read as
+   the same physical dial. Keep the two in sync if ProcessingScreen's own
+   values change. The deliberate differences are the dark radial-gradient
+   backdrop image and the gray track: this screen draws neither (see
+   RingScreen.jsx) — both appear for the first time on ProcessingScreen's
+   own first frame, so the "loading" beat reads as just a bare mark on plain
+   white, with the real shading/track arriving only once the real,
+   task-labeled process starts. */
+
+.ring-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  /* No fade — the arc/dot/checkpoints themselves are pixel-identical to
+     ProcessingScreen's own first frame (only the newly-appearing gradient
+     backdrop and track differ), so this hand-off is meant to be an instant
+     cut, not a crossfade with a visible in-between moment. */
+}
+
+.ring-screen--visible {
+  opacity: 1;
+}
+
+.ring-screen__disc {
+  position: absolute;
+  left: 11.10cqw;
+  top: 11.10cqw;
+  width: 77.80cqw;
+  height: 77.80cqw;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(1.8cqw) saturate(120%);
+  -webkit-backdrop-filter: blur(1.8cqw) saturate(120%);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow:
+    inset 0 1.4cqw 2.2cqw rgba(255, 255, 255, 0.6),
+    inset 0 -1.1cqw 1.7cqw rgba(0, 0, 0, 0.05),
+    0 0.9cqw 2.6cqw rgba(0, 0, 0, 0.22);
+}
+
+.ring-screen__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The live arc — its `d` is recomputed every frame in RingScreen.jsx
+   (spin -> collapse), so no CSS animation here; only the opacity swap
+   between this and .ring-screen__cap is declared in CSS (see renderArc in
+   RingScreen.jsx for when each shows). No drop-shadow here, unlike
+   ProcessingScreen's own .processing-screen__arc — that shadow is meant to
+   blend into the neumorphic groove along the gray track's edges, and this
+   screen deliberately has no track underneath (see the top-of-file note),
+   so the same shadow just reads as a stray smudge floating on plain white. */
+.ring-screen__ring {
+  fill: none;
+  stroke: #000000;
+  stroke-linecap: round;
+}
+
+/* The point the ring collapses into, and the same fixed start position
+   ProcessingScreen's own ring is drawn from — see the cap circle there. No
+   drop-shadow, same reasoning as .ring-screen__ring above. */
+.ring-screen__cap {
+  fill: #000000;
+}
+
+/* Same look as ProcessingScreen's own .processing-screen__checkpoint, plus
+   a staggered pop-in (see the per-dot animation-delay set inline in
+   RingScreen.jsx) so the five appear one at a time instead of all at once.
+   No drop-shadow, same reasoning as .ring-screen__ring above. */
+.ring-screen__checkpoint {
+  fill: #ffffff;
+  mix-blend-mode: difference;
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: ring-screen-dot-in 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes ring-screen-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

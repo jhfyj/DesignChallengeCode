@@ -1,0 +1,11 @@
+.stage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px 20px;
+  background: radial-gradient(circle at 50% 35%, #1a1c22 0%, #0b0c10 60%, #060608 100%);
+  overflow: hidden;
+}

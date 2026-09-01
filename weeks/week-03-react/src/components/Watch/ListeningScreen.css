@@ -1,0 +1,250 @@
+/* Values converted from the 1072px Figma frame to cqw (cqw = figma_px / 10.72)
+   against .watch__screen's own container size — see DirectionCard.css for
+   the same convention. */
+
+.listening-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms ease;
+  /* When the mic protrusion starts growing in on first mount. The wing
+     image and the cutout it needs in the black dial are two separate
+     elements that have to grow in lockstep — a mismatch here leaves the
+     growing wing invisible against an already-full-size white hole — so
+     they read this one value rather than each carrying its own copy. */
+  --mic-boot-delay: 620ms;
+}
+
+.listening-screen--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Slot matching the "Ellipse 2" position/size every Figma frame shares
+   (35px inset from the white rim). Plain black for now — this is meant to
+   eventually be a dynamic shader-style gradient, but that's deferred; flat
+   black is the stand-in until that work happens. Full-bleed SVG (not just
+   the inset circle) so its viewBox can share the same 1072-unit Figma-px
+   coordinate space as the wing mask cut into it — see ListeningScreen.jsx. */
+.listening-screen__glow-box {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.listening-screen .digital-face {
+  transition: opacity 200ms ease;
+}
+
+.listening-screen--active .digital-face {
+  opacity: 0.22;
+}
+
+/* Boot sequence, first mount only: the rim shows plain and empty for a
+   beat, then the date/time/stats fade in, then (see .listening-screen__mic-boot
+   below) the bubble grows in with the mic last. Since ListeningScreen never
+   unmounts, this animation only ever plays once per app load. */
+@keyframes listening-screen-face-boot-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.listening-screen__face-boot {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: listening-screen-face-boot-in 500ms ease 300ms forwards;
+}
+
+/* Covers the clock/gradient entirely once actively recording — this is
+   what "the white is the entire screen" means, restored from the original
+   mic interaction rather than the calmer glow-brighten-only treatment. */
+.listening-screen__flood {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.listening-screen--active .listening-screen__flood {
+  opacity: 1;
+}
+
+.listening-screen__wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.listening-screen--active .listening-screen__wave {
+  opacity: 1;
+}
+
+.listening-screen__wave-line {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  filter: blur(1px);
+}
+
+.listening-screen__wave-line--a {
+  stroke: url(#voiceGradA);
+  opacity: 0.9;
+}
+
+.listening-screen__wave-line--b {
+  stroke: url(#voiceGradB);
+  opacity: 0.65;
+}
+
+.listening-screen__wave-line--c {
+  stroke: url(#voiceGradC);
+  opacity: 0.85;
+}
+
+/* Scaled up ~18% from the raw Figma export (and re-centered/re-anchored to
+   the same bottom edge) so the wing's own silhouette reaches further out
+   at the sides — at the unscaled size there was a gap between where the
+   wing's white stopped and the outer white rim actually is, since the
+   wing's bounding box is narrower than the circle at that height. Scaling
+   it up closes that gap with real overlap instead of trying to hit an
+   exact tangent. */
+/* Plays twice, on two different schedules — the bubble grows up out of the
+   rim's flat bottom edge instead of just appearing, an approximation of a
+   true shape-morph (that would need SVG path interpolation) via a plain
+   scale/fade, which reads fine at this size. Lives on the wrapper, not the
+   button itself, so it doesn't fight .listening-screen__mic--pressed's own
+   transform below. */
+@keyframes listening-screen-mic-boot-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.05);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.listening-screen__mic-boot {
+  position: absolute;
+  left: 12.8cqw;
+  top: 75.18cqw;
+  width: 74.41cqw;
+  height: 26.08cqw;
+  transform-origin: bottom center;
+  opacity: 0;
+}
+
+/* True first mount (micBootId === 0 in ListeningScreen.jsx) — held back so
+   it follows the face rather than growing in alongside it, but overlapping
+   the tail of that fade instead of waiting for it to finish. Starting only
+   once the face had fully landed (300ms delay + 500ms) left a dead beat
+   before anything else moved, which read as the protrusion being late. */
+.listening-screen__mic-boot--first {
+  animation: listening-screen-mic-boot-in 450ms ease var(--mic-boot-delay) forwards;
+}
+
+/* Every later remount, i.e. arriving back here from a decline (see
+   micBootId in useAssistantFlow.js). No entrance animation at all: this
+   protrusion doesn't grow in on its own, because RimMorph has been drawing
+   it the whole way as the two direction protrusions merge into it, and a
+   second grow-in underneath that would be the same shape animating twice.
+   It just sits at its settled state, revealed as RimMorph fades off it. */
+.listening-screen__mic-boot--replay {
+  opacity: 1;
+  transform: none;
+}
+
+/* The dial mask's cutout (see ListeningScreen.jsx) — same keyframes and
+   timing as .listening-screen__mic-boot above so the hole it cuts in the
+   black dial grows in lockstep with the visible wing image on top of it,
+   instead of being a full-size cutout from the first frame (which made
+   the growing wing image invisible against the already-white hole). */
+.listening-screen__dial-mask-boot {
+  opacity: 0;
+}
+
+.listening-screen__dial-mask-boot--first {
+  animation: listening-screen-mic-boot-in 450ms ease var(--mic-boot-delay) forwards;
+}
+
+/* Same reasoning as .listening-screen__mic-boot--replay above — settled,
+   not animated, because RimMorph drew the arrival. */
+.listening-screen__dial-mask-boot--replay {
+  opacity: 1;
+}
+
+/* Held back while RimMorph is mid-merge, then fades up underneath it once
+   the shape has landed — by which point the two are the same shape, so
+   what's actually crossing over is invisible. */
+.listening-screen__mic-boot--yielded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.listening-screen__mic-boot--replay {
+  transition: opacity 160ms ease;
+}
+
+.listening-screen__mic {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease;
+}
+
+.listening-screen__mic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sits where the wing's own mic glyph used to be cut out — drawn as a solid
+   icon instead of a hole punched through to whatever's behind the button,
+   since that background is solid white itself while actively
+   listening (the flood), which made a punched-through glyph disappear
+   exactly when it mattered most. */
+.listening-screen__mic-icon {
+  position: absolute;
+  left: 50%;
+  top: 46.42%;
+  transform: translate(-50%, -50%);
+  width: 9.5cqw;
+  height: 9.5cqw;
+  color: #1e1e1e;
+  pointer-events: none;
+}
+
+.listening-screen__mic--pressed {
+  transform: scale(0.97);
+}
+
+/* Hides the mic while the wave-to-ring morph plays after a stop click —
+   a static mic icon sitting in the middle of a forming loading ring reads
+   as broken, not as a transition. */
+.listening-screen__mic--hide {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms ease;
+}

@@ -1,0 +1,241 @@
+/* Every value below is lifted straight from the Figma frame (1072px
+   square) and converted to `cqw` against .watch__screen's own container
+   size — cqw = figma_px / 10.72 — so the layout stays pixel-proportional
+   to the Figma design at any watch size instead of drifting. */
+
+.direction-card {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 50%;
+  overflow: hidden;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms ease;
+  /* This card is swiped left/right to page between recommendations, not
+     scrolled — let the browser leave that gesture to us instead of trying
+     to pan/zoom the page with it. */
+  touch-action: none;
+}
+
+.direction-card--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Full-bleed photo, inset by the same 35px "white rim" every Figma frame
+   shares — the rim itself is just .direction-card's own white background
+   showing through this inset, not a separate ring layer. */
+.direction-card {
+  background: #ffffff;
+}
+
+/* The round "porthole" onto the photo — this is what actually clips to a
+   circle and it never moves. A photo sliding against a mask that's ALSO
+   circular (the old approach) let the photo's own curved edge show past
+   the mask's curved edge mid-slide, reading as the image flying out of
+   the rim rather than sliding through it; a fixed round window with a
+   plain square sliding underneath avoids that entirely. */
+.direction-card__window {
+  position: absolute;
+  left: 3.265cqw; /* 35px */
+  top: 3.265cqw;
+  width: 93.47cqw; /* 1002px */
+  height: 93.47cqw;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000000;
+}
+
+/* Wraps one page's photo, overlay, and text so they move together as one
+   unit through the window above. Square and full-bleed within the window
+   (no inset, no rounding of its own) so there's no gap at its own edges
+   for the window's black backing to show through except in the strip a
+   slide has actually vacated. During a page change two of these are
+   mounted at once — see DirectionCard.jsx — positioned and animated
+   inline so the outgoing and incoming photo stay edge-to-edge the whole
+   way across instead of leaving a gap between an exit and a separate
+   enter. */
+.direction-card__slide {
+  position: absolute;
+  inset: 0;
+}
+
+.direction-card__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* A slight blur reads as more contrast — it softens the busy detail
+     (windows, signage) that was fighting the text sitting on top of it. */
+  filter: blur(0.15cqw);
+}
+
+/* Darkens Golden Wok/Jade Palace's shared source photo, which runs too
+   light on its own — sits between the photo and the text/pill so neither
+   the color grading above nor the text's own contrast is affected.
+   Deliberately has no opacity transition: each panel owns a fixed overlay
+   for its own page and a page change swaps whole panels rather than
+   restyling one, so anything to tween here would be a flash mid-swipe
+   rather than a real change. */
+.direction-card__photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000000;
+  pointer-events: none;
+}
+
+/* Golden Wok borrows Twilight Lounge's source photo, so it gets its own
+   crop and a warm grade to keep that repeat from reading as an obvious
+   duplicate. Jade Palace has its own photo and so needs neither — it
+   inherits the plain blur above, same as Twilight Lounge. */
+.direction-card__photo--golden {
+  object-position: 30% 60%;
+  filter: blur(0.15cqw) saturate(1.25) sepia(0.12) brightness(1.05);
+}
+
+.direction-card__content {
+  position: absolute;
+  /* 280px/174px in the full-card frame, minus the window's own 35px inset
+     now that content lives inside .direction-card__window instead of
+     .direction-card directly. */
+  left: 22.854cqw; /* 245px */
+  top: 12.966cqw; /* 139px */
+  width: 47.855cqw; /* 513px */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3.358cqw; /* 36px */
+  text-align: center;
+}
+
+.direction-card__name {
+  margin: 0;
+  font-size: 4.478cqw; /* 48px */
+  font-weight: 300;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+.direction-card__description {
+  margin: 0.47cqw 0 0; /* 5px gap from name, down from 13px */
+  font-size: 2.985cqw; /* 32px */
+  font-weight: 300;
+  color: #ffffff;
+  opacity: 0.81;
+  line-height: 1.2;
+}
+
+.direction-card__pill {
+  display: flex;
+  align-items: center;
+  gap: 0.84cqw; /* 9px */
+  padding: 2.239cqw 3.918cqw; /* 24px / 42px */
+  border-radius: 999px;
+  background: rgba(116, 116, 116, 0.27);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(0.938cqw); /* 10.05px */
+  -webkit-backdrop-filter: blur(0.938cqw);
+  color: #c2c2c2;
+  font-size: 2.985cqw; /* 32px */
+  font-weight: 300;
+  white-space: nowrap;
+}
+
+.direction-card__pill-icon {
+  width: 3.731cqw; /* 40px */
+  height: 3.731cqw;
+  flex-shrink: 0;
+}
+
+.direction-card__dots {
+  position: absolute;
+  left: 50%;
+  top: 90.11cqw; /* 966px */
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1.493cqw; /* 16px gap between 16px dots on 32px centers */
+}
+
+.direction-card__dot {
+  width: 1.493cqw; /* 16px */
+  height: 1.493cqw;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0.3;
+  transition: opacity 200ms ease;
+}
+
+.direction-card__dot--active {
+  opacity: 1;
+}
+
+/* Same grow-up-from-the-bottom-edge morph as
+   .listening-screen__mic-boot/listening-screen-mic-boot-in — these wings
+   sit flush against the bottom of the circle the same way the mic wing
+   does, so they get the same treatment. Unlike that one-time boot
+   (ListeningScreen never unmounts), this card re-shows on every completed
+   request, so DirectionCard.jsx only mounts these two buttons while
+   `visible` is true instead of leaving them permanently mounted — a fresh
+   mount is what replays a CSS `animation`, not a parent opacity toggle. */
+@keyframes direction-card-wing-boot-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.05);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.direction-card__wing {
+  position: absolute;
+  top: 65.42cqw; /* 701.5px, decline; accept overrides */
+  width: 37.313cqw; /* 400px */
+  height: 35.588cqw; /* 381.5px */
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  transform-origin: bottom center;
+  opacity: 0;
+  animation: direction-card-wing-boot-in 450ms ease forwards;
+}
+
+/* The dilated backing shape behind the crisp wing image (see
+   WING_DILATE_RADIUS in DirectionCard.jsx) — overflow: visible so the
+   backing's own margin can actually paint past the wing's nominal 400x381.5
+   box instead of being clipped right back off at that boundary, which
+   would defeat the point of dilating past it in the first place. */
+.direction-card__wing-backing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.direction-card__wing--decline {
+  left: 6.063cqw; /* 65px */
+}
+
+.direction-card__wing--accept {
+  left: 56.63cqw; /* 607px */
+  top: 65.89cqw; /* 706.5px */
+  /* Follows the decline wing in rather than growing in lockstep with it —
+     same idea as the mic boot trailing the face boot, a beat after the
+     first element rather than everything landing at once. */
+  animation-delay: 90ms;
+}
+
+/* Nothing here animates the wings out on decline. Sliding and squashing
+   each one toward the center was the old approximation of the merge, and
+   it was exactly the thing that read as separate cutouts moving over the
+   rim rather than the rim itself changing shape. RimMorph now takes the
+   rim and both protrusions over as one shape for that transition — see
+   rimShape.js. */

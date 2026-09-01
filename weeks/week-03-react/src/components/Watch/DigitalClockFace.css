@@ -1,0 +1,125 @@
+/* Values converted from the 1072px Figma frame to cqw (cqw = figma_px / 10.72)
+   against .watch__screen's own container size — see DirectionCard.css for
+   the same convention. Figma reference: node 1076:63 / 1076:42
+   ("Weekly experiments"). */
+
+.digital-face {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.digital-face__date {
+  position: absolute;
+  left: 50%;
+  top: 18.19cqw; /* 195px */
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2.425cqw; /* 26px */
+  margin: 0;
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 4.478cqw; /* 48px */
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.digital-face__time-block {
+  position: absolute;
+  left: 50%;
+  top: 33.21cqw; /* 356px */
+  transform: translateX(-50%);
+  width: 61.29cqw; /* 657px */
+  text-align: center;
+}
+
+/* Stacks the crisp line and its blurred ghost in the same grid cell so
+   they align perfectly regardless of font metrics, instead of hand-tuning
+   an absolute offset for the ghost copy. */
+.digital-face__time-stack,
+.digital-face__ampm-stack {
+  display: grid;
+}
+
+.digital-face__time-stack > *,
+.digital-face__ampm-stack > * {
+  grid-area: 1 / 1;
+}
+
+.digital-face__time {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 11.94cqw; /* 128px */
+  line-height: 1;
+  color: #ffffff;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  /* The crisp copy fades to fully transparent toward the bottom, letting
+     the solid black background underneath show straight through — this is
+     what makes the digits read as dissolving into black rather than a
+     flat cutoff. Replaces an earlier backdrop-filter overlay that turned
+     out unreliable: blurring white glyphs without a solid dark layer on
+     top just produced a hazy white smear instead of a black fade. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 88%);
+}
+
+/* Blurred duplicate of the same text, masked to only appear in the band
+   the crisp copy above is fading through — gives the dissolve an actual
+   blur instead of just a hard alpha ramp. */
+.digital-face__time--blur {
+  /* em, not cqw: `filter: blur()` silently resolves container-query
+     length units to 0 in this engine (verified directly — even a bare
+     `filter: blur(0.6cqw)` on an unrelated element computes to
+     `blur(0px)`), which is what made this layer invisible. em is relative
+     to this element's own font-size, which does correctly get its value
+     from cqw, so this still scales proportionally with the watch face. */
+  filter: blur(0.05em);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 40%, #000 60%, transparent 92%);
+  mask-image: linear-gradient(to bottom, transparent 40%, #000 60%, transparent 92%);
+}
+
+.digital-face__ampm {
+  margin: 1.03cqw 0 0; /* 11px, tuned so the baseline gap matches Figma's 139px time-top-to-ampm-top */
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 8.955cqw; /* 96px */
+  line-height: 1;
+  color: #ffffff;
+  opacity: 0.8;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 85%);
+}
+
+.digital-face__ampm--blur {
+  filter: blur(0.055em); /* em, not cqw — see .digital-face__time--blur */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 30%, #000 55%, transparent 90%);
+  mask-image: linear-gradient(to bottom, transparent 30%, #000 55%, transparent 90%);
+}
+
+.digital-face__stats {
+  position: absolute;
+  left: 50%;
+  top: 61.94cqw; /* 664px */
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4.478cqw; /* 48px */
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 5.224cqw; /* 56px */
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.digital-face__weather {
+  display: flex;
+  align-items: center;
+  gap: 1.119cqw; /* 12px */
+}
+
+.digital-face__weather svg {
+  width: 3.73cqw;
+  height: 3.73cqw;
+  flex-shrink: 0;
+}

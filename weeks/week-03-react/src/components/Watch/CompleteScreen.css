@@ -1,0 +1,44 @@
+/* Values converted from the 1072px Figma frame to cqw (cqw = figma_px / 10.72)
+   against .watch__screen's own container size — see DirectionCard.css for
+   the same convention. Flat white beat, not the gradient/glass look —
+   see the comment in CompleteScreen.jsx for why. */
+
+.complete-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.complete-screen--visible {
+  opacity: 1;
+}
+
+.complete-screen__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.586cqw; /* 17px */
+}
+
+.complete-screen__icon {
+  width: 7.045cqw; /* 75.5px */
+  height: 6.716cqw; /* 71.99px */
+  color: #000000;
+}
+
+.complete-screen__label {
+  margin: 0;
+  font-size: 4.478cqw; /* 48px */
+  font-weight: 300;
+  color: #000000;
+}

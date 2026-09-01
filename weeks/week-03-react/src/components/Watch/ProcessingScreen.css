@@ -1,0 +1,227 @@
+/* Values converted from the 1072px Figma frame to cqw (cqw = figma_px / 10.72)
+   against .watch__screen's own container size — see DirectionCard.css for
+   the same convention. */
+
+.processing-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  /* No fade-in on the screen itself — RingScreen's own final frame (a black
+     dot at the top plus five checkpoints) matches this screen's own first
+     frame for everything except the dark radial-gradient backdrop and the
+     gray track, neither of which RingScreen ever draws (see RingScreen.css).
+     The gradient backdrop still appears instantly, same as everything else
+     here; the gray track is the one exception, easing in on its own (see
+     .processing-screen__track's own opacity transition below) instead of
+     popping in with the rest. Note the lack of fade here also makes this
+     screen's own fade-out (into CompleteScreen) instant. */
+}
+
+.processing-screen--visible {
+  opacity: 1;
+}
+
+.processing-screen__gradient {
+  position: absolute;
+  left: 3.265cqw; /* 35px */
+  top: 3.265cqw;
+  width: 93.47cqw; /* 1002px */
+  height: 93.47cqw;
+  border-radius: 50%;
+}
+
+/* Frosted-glass disc sitting on top of the gradient — the arc/track now
+   fill the full 84px band around it edge to edge (see ARC_STROKE in
+   ProcessingScreen.jsx), so the mono gradient's only remaining job is a
+   faint vignette behind this glass, not a visible ring of its own.
+   Nearly-opaque white (matching the flat, near-white center of the Figma
+   frame) rather than the barely-there tint this used to be, with a bright
+   rim and an inner highlight standing in for a glass edge catching light,
+   plus a soft diagonal shine (::before) mimicking a reflection. */
+.processing-screen__disc {
+  position: absolute;
+  left: 11.10cqw; /* 119px */
+  top: 11.10cqw;
+  width: 77.80cqw; /* 834px */
+  height: 77.80cqw;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(1.8cqw) saturate(120%);
+  -webkit-backdrop-filter: blur(1.8cqw) saturate(120%);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow:
+    inset 0 1.4cqw 2.2cqw rgba(255, 255, 255, 0.6),
+    inset 0 -1.1cqw 1.7cqw rgba(0, 0, 0, 0.05),
+    0 0.9cqw 2.6cqw rgba(0, 0, 0, 0.22);
+}
+
+.processing-screen__disc::before {
+  content: '';
+  position: absolute;
+  top: -18%;
+  left: -8%;
+  width: 65%;
+  height: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  filter: blur(0.6cqw);
+  transform: rotate(-18deg);
+}
+
+.processing-screen__arc-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Flat neutral-gray backdrop for the whole ring, drawn once beneath every
+   segment — this is what "pending" looks like: no colored gradient
+   peeking through, just the track waiting for the black sweep to cover it.
+   Starts plain white and eases to gray once the screen goes visible —
+   RingScreen's own loading beat never draws this track (see
+   RingScreen.css), so this is the track's first-ever appearance. Animating
+   `stroke` color rather than `opacity` is deliberate: this stroke sits
+   directly over .processing-screen__gradient's own dark outer edge (see
+   ProcessingScreen.jsx), so fading via opacity let that dark gradient bleed
+   through underneath while translucent, reading as "black fading to gray"
+   instead of "white fading to gray." Staying fully opaque throughout keeps
+   it opaque enough to fully hide the gradient at every point in the fade. */
+.processing-screen__track {
+  fill: none;
+  stroke: #ffffff;
+  /* Matches ARC_STROKE in ProcessingScreen.jsx — must stay in sync with it
+     and with .processing-screen__arc below so the track and the sweep
+     that covers it are exactly the same width. */
+  stroke-width: 23.5;
+  transition: stroke 500ms ease;
+}
+
+.processing-screen--visible .processing-screen__track {
+  stroke: #d9d9d9;
+}
+
+/* The neumorphic groove itself — a thin dark line blurred heavily enough
+   that it reads as a soft shading gradient blended in from the edge, not a
+   line of its own. Two of these are drawn (see ProcessingScreen.jsx), one
+   hugging the track's outer edge and one hugging its inner edge, each
+   fading toward the middle of the band. Fades in via opacity (unlike the
+   track itself above) since it's layered on top of that now-always-opaque
+   track rather than directly over the gradient backdrop, so there's nothing
+   dark underneath for a translucent moment to expose. */
+.processing-screen__track-shadow {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.15);
+  stroke-width: 5;
+  filter: blur(3px);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.processing-screen--visible .processing-screen__track-shadow {
+  opacity: 1;
+}
+
+/* Sits in the same band as the gradient ring (radius 128 of 150, between
+   the 834px white disc and the 1002px gradient edge). pathLength=1 +
+   strokeDasharray=1 lets strokeDashoffset act as a plain 0-1 progress
+   value per segment instead of needing each arc's true length. Animated
+   directly via the Web Animations API (see ArcSegment in
+   ProcessingScreen.jsx) rather than a CSS transition — no transition
+   declared here. */
+.processing-screen__arc {
+  fill: none;
+  stroke: #000000;
+  /* Matches ARC_STROKE in ProcessingScreen.jsx and .processing-screen__track
+     above — fills the full ~84px band from the Figma frame edge to edge. */
+  stroke-width: 23.5;
+  /* Flat, not round — a round cap on every segment left a small bump/dot at
+     each of the 5 checkpoint boundaries where two segments meet, since a
+     round cap extends past its own mathematical endpoint by half the
+     stroke width. Flat caps butt flush against each other so the whole
+     ring reads as one continuous line, not five capsules with dots between
+     them, even though it's still five independently-timed segments underneath. */
+  stroke-linecap: butt;
+  /* No offset — an offset drop-shadow on a curved, butt-jointed stroke reads
+     as a hard secondary line trailing the arc rather than a soft shadow,
+     especially at the seam between two independently-shadowed segments.
+     A pure blur (0 0) casts an even halo in every direction instead, which
+     also blends continuously across segment boundaries. */
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Stands in for a round stroke-linecap at the two places that actually are
+   an edge of the whole ring (the fixed start and the live leading tip) —
+   see the comment on ArcSegment for why every internal checkpoint join
+   stays flat instead. */
+.processing-screen__arc-cap {
+  fill: #000000;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Plain white — the visible color comes entirely from `difference`
+   blending against whatever's underneath (gray track vs. black sweep), so
+   this is the one dot style that automatically inverts as the line
+   crosses it instead of needing per-checkpoint state. */
+.processing-screen__checkpoint {
+  fill: #ffffff;
+  mix-blend-mode: difference;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.45));
+}
+
+.processing-screen__content {
+  position: absolute;
+  left: 26.119cqw; /* 280px */
+  top: 39.46cqw; /* 423px */
+  width: 47.855cqw; /* 513px */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.586cqw; /* 17px */
+}
+
+.processing-screen__icon {
+  width: 7.045cqw; /* 75.5px */
+  height: 6.716cqw; /* 71.99px */
+  transition: opacity 220ms ease;
+}
+
+.processing-screen__icon--carbon {
+  color: #000000;
+}
+
+.processing-screen__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Fade out (via the JS-driven lag in ProcessingScreen.jsx) before a new
+   task's icon/label fade back in, instead of snapping straight across. */
+.processing-screen__fade--out {
+  opacity: 0;
+}
+
+.processing-screen__label {
+  margin: 0;
+  font-size: 4.478cqw; /* 48px */
+  font-weight: 300;
+  color: #000000;
+  transition: opacity 220ms ease;
+}
+
+.processing-screen__timer {
+  margin: 1.213cqw 0 0; /* 13px */
+  font-size: 3.731cqw; /* 40px */
+  font-weight: 300;
+  color: #4d4d4d;
+  opacity: 0.81;
+}
