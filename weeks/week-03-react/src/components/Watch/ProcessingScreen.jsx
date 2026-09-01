@@ -28,10 +28,6 @@ const CAP_RADIUS = ARC_STROKE / 2
 // regardless of the (much thicker) band width, so this isn't derived from
 // ARC_STROKE: 16 Figma px / 3.5733.
 const CHECKPOINT_RADIUS = 4.5
-// How many points along a segment's own arc to animate the leading-tip cap
-// through — enough for the round dot to visibly follow the curve rather
-// than cutting corners across it.
-const TIP_KEYFRAMES = 16
 
 // Same 0deg-at-12-o'clock, clockwise-positive convention as WatchFace.jsx.
 function polar(deg, center = CENTER) {
@@ -66,14 +62,21 @@ function describeSegment(startDeg, endDeg) {
 //
 // Caps stay flat (butt) at every internal checkpoint join — a round cap on
 // all five segments is what caused the little dots/bumps fixed earlier.
-// The only two places a round cap actually belongs are the true start of
-// the whole ring (rendered once by the parent, not per-segment) and the
-// live leading edge of whichever segment is currently sweeping — that tip
-// is animated here as its own circle, in lockstep with the stroke reveal,
-// tracing the same arc rather than cutting a straight line across it.
+// Only the segment currently sweeping gets round caps, which is what puts a
+// rounded tip on the live leading edge; its round *start* cap extends back
+// over the previous segment, which is already drawn solid black there, so
+// it lands black-on-black and never reads as a bump. Once a segment is
+// done it goes back to butt, so the join it now forms with the next one
+// stays flush.
+//
+// This used to be a separate <circle> tip whose cx/cy were animated via the
+// Web Animations API. Safari doesn't support cx/cy as animatable CSS
+// properties, so on iOS that animation silently did nothing and the tip sat
+// frozen at the segment's start — leaving the sweeping edge looking flat.
+// Letting the stroke's own linecap do the work needs no scripting at all
+// and renders the same everywhere.
 function ArcSegment({ startDeg, endDeg, state, durationMs }) {
   const pathRef = useRef(null)
-  const tipRef = useRef(null)
   const d = describeSegment(startDeg, endDeg)
 
   useEffect(() => {
@@ -85,43 +88,18 @@ function ArcSegment({ startDeg, endDeg, state, durationMs }) {
       easing: 'linear',
       fill: 'forwards',
     })
-
-    const tipEl = tipRef.current
-    const tipAnim = tipEl?.animate(
-      Array.from({ length: TIP_KEYFRAMES + 1 }, (_, i) => {
-        const t = i / TIP_KEYFRAMES
-        const point = polar(startDeg + (endDeg - startDeg) * t)
-        return { cx: point.x, cy: point.y }
-      }),
-      { duration: durationMs, easing: 'linear', fill: 'forwards' },
-    )
-
-    return () => {
-      pathAnim.cancel()
-      tipAnim?.cancel()
-    }
-  }, [state, durationMs, startDeg, endDeg])
+    return () => pathAnim.cancel()
+  }, [state, durationMs])
 
   return (
-    <>
-      <path
-        ref={pathRef}
-        d={d}
-        pathLength="1"
-        strokeDasharray="1"
-        strokeDashoffset={state === 'done' ? 0 : 1}
-        className="processing-screen__arc"
-      />
-      {state === 'active' && (
-        <circle
-          ref={tipRef}
-          cx={polar(startDeg).x}
-          cy={polar(startDeg).y}
-          r={CAP_RADIUS}
-          className="processing-screen__arc-cap"
-        />
-      )}
-    </>
+    <path
+      ref={pathRef}
+      d={d}
+      pathLength="1"
+      strokeDasharray="1"
+      strokeDashoffset={state === 'done' ? 0 : 1}
+      className={`processing-screen__arc${state === 'active' ? ' processing-screen__arc--active' : ''}`}
+    />
   )
 }
 
@@ -171,25 +149,11 @@ export default function ProcessingScreen({ visible, tasks, checkpointIndex, cycl
             the (grayscale) gradient disc peek through. */}
         <circle cx={CENTER} cy={CENTER} r={RADIUS} className="processing-screen__track" />
 
-        {/* Neumorphic groove: a soft dark blur blended in from each edge of
-            the track (where it meets the outer white margin, and where it
-            meets the inner glass disc) so the gray band reads as recessed
-            rather than flat. Drawn on top of the flat track but under the
-            black sweep, so wherever the sweep has already covered that
-            stretch of the ring, it paints right over these and the groove
-            simply isn't there anymore — same as the track itself. */}
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={RADIUS + ARC_STROKE / 2 - 3}
-          className="processing-screen__track-shadow"
-        />
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={RADIUS - ARC_STROKE / 2 + 3}
-          className="processing-screen__track-shadow"
-        />
+        {/* The neumorphic groove that used to sit here (two blurred strokes
+            hugging the track's inner and outer edges, making the gray band
+            read as recessed) is gone — it never rendered on mobile, so the
+            recessed look it was carrying only ever existed on desktop. The
+            track is a flat gray band on every platform now. */}
 
         {/* The one edge that's never anyone's internal join — the true
             start of the whole ring, fixed at the top. Rendered once here

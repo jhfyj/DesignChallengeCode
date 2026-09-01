@@ -108,27 +108,6 @@
   stroke: #d9d9d9;
 }
 
-/* The neumorphic groove itself — a thin dark line blurred heavily enough
-   that it reads as a soft shading gradient blended in from the edge, not a
-   line of its own. Two of these are drawn (see ProcessingScreen.jsx), one
-   hugging the track's outer edge and one hugging its inner edge, each
-   fading toward the middle of the band. Fades in via opacity (unlike the
-   track itself above) since it's layered on top of that now-always-opaque
-   track rather than directly over the gradient backdrop, so there's nothing
-   dark underneath for a translucent moment to expose. */
-.processing-screen__track-shadow {
-  fill: none;
-  stroke: rgba(0, 0, 0, 0.15);
-  stroke-width: 5;
-  filter: blur(3px);
-  opacity: 0;
-  transition: opacity 500ms ease;
-}
-
-.processing-screen--visible .processing-screen__track-shadow {
-  opacity: 1;
-}
-
 /* Sits in the same band as the gradient ring (radius 128 of 150, between
    the 834px white disc and the 1002px gradient edge). pathLength=1 +
    strokeDasharray=1 lets strokeDashoffset act as a plain 0-1 progress
@@ -142,12 +121,13 @@
   /* Matches ARC_STROKE in ProcessingScreen.jsx and .processing-screen__track
      above — fills the full ~84px band from the Figma frame edge to edge. */
   stroke-width: 23.5;
-  /* Flat, not round — a round cap on every segment left a small bump/dot at
+  /* Flat by default — a round cap on every segment left a small bump/dot at
      each of the 5 checkpoint boundaries where two segments meet, since a
      round cap extends past its own mathematical endpoint by half the
      stroke width. Flat caps butt flush against each other so the whole
      ring reads as one continuous line, not five capsules with dots between
-     them, even though it's still five independently-timed segments underneath. */
+     them, even though it's still five independently-timed segments underneath.
+     The one exception is the segment currently sweeping — see below. */
   stroke-linecap: butt;
   /* No offset — an offset drop-shadow on a curved, butt-jointed stroke reads
      as a hard secondary line trailing the arc rather than a soft shadow,
@@ -157,10 +137,17 @@
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
 }
 
-/* Stands in for a round stroke-linecap at the two places that actually are
-   an edge of the whole ring (the fixed start and the live leading tip) —
-   see the comment on ArcSegment for why every internal checkpoint join
-   stays flat instead. */
+/* Only the segment that's mid-sweep, which is what rounds the live leading
+   edge. Its round start cap overlaps the previous segment (already solid
+   black there), so it costs nothing at that join, and the segment reverts
+   to butt the moment it's done — see the comment on ArcSegment. */
+.processing-screen__arc--active {
+  stroke-linecap: round;
+}
+
+/* Stands in for a round stroke-linecap at the one place that's an edge of
+   the whole ring but never anyone's sweeping tip: the fixed start at 12
+   o'clock, which goes flat again once its segment is done. */
 .processing-screen__arc-cap {
   fill: #000000;
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
