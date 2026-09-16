@@ -5,6 +5,25 @@ import { rotatedBoxStyle } from './rotationLayout.js'
 const CORNERS = ['nw', 'ne', 'se', 'sw']
 const EDGES = ['n', 'e', 's', 'w']
 
+// A handle's CSS cursor (ns-resize, ew-resize, ...) is a screen-space hint,
+// but its ROLE (n/e/s/w/corners) is defined in the element's own LOCAL
+// frame — the CSS class-based cursor (Canvas.css) is static and doesn't
+// know about rotation, so a 90°-rotated element's "s" handle (now sitting
+// at the element's visual LEFT edge, see useElementDrag.js's startResize)
+// still shows an up/down cursor even though dragging it left/right is what
+// actually resizes it. This computes the correct cursor by rotating the
+// handle's nominal compass angle by the element's own rotation and snapping
+// to the nearest of CSS's 4 resize-cursor directions (each covers a 90°-
+// wide band), then gets applied as an inline style override.
+const NOMINAL_ANGLE = { n: 0, ne: 45, e: 90, se: 135, s: 180, sw: 225, w: 270, nw: 315 }
+const CURSOR_BY_COMPASS_BUCKET = ['ns-resize', 'nesw-resize', 'ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize', 'ew-resize', 'nwse-resize']
+
+function resizeCursorForHandle(handleRole, rotation) {
+  const effective = ((NOMINAL_ANGLE[handleRole] + (rotation || 0)) % 360 + 360) % 360
+  const bucket = Math.round(effective / 45) % 8
+  return CURSOR_BY_COMPASS_BUCKET[bucket]
+}
+
 // Chebyshev distance (in px) from a corner's center within which a
 // pointerdown resizes instead of rotates — the handle's hit area is bigger
 // than this so there's a ring beyond the resize zone, still on the same
@@ -40,6 +59,9 @@ function CornerHandle({ corner, placement, boxRef, onStartResize, onStartRotate 
     <button
       type="button"
       className={`selection-overlay__handle selection-overlay__handle--${corner} selection-overlay__handle--zone-${zone}`}
+      // Only the resize zone's cursor is rotation-dependent — the rotate
+      // zone's grab cursor (Canvas.css) has no directional meaning to correct.
+      style={zone === 'resize' ? { cursor: resizeCursorForHandle(corner, placement.rotation) } : undefined}
       onPointerMove={(e) => setZone(zoneFromEvent(e))}
       onPointerDown={handlePointerDown}
       aria-label={zone === 'rotate' ? 'Rotate' : `Resize ${corner}`}
@@ -58,6 +80,7 @@ function EdgeHandle({ edge, placement, onStartResize }) {
     <button
       type="button"
       className={`selection-overlay__edge selection-overlay__edge--${edge}`}
+      style={{ cursor: resizeCursorForHandle(edge, placement.rotation) }}
       onPointerDown={(e) => onStartResize(e, placement, edge)}
       aria-label={`Resize ${edge}`}
     >

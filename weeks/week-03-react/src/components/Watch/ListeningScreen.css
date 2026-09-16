@@ -214,10 +214,17 @@
   transition: transform 150ms ease;
 }
 
-.listening-screen__mic img {
+/* preserveAspectRatio="none" in the markup plus this: the artwork's
+   676x236.897 viewBox stretches to fill the button exactly, which is the
+   same mapping the dial mask applies to the identical path, so the visible
+   wing and the hole cut for it stay registered to the pixel. overflow is
+   visible because the artwork's top curve rides a hair above its own
+   viewBox, and clipping it there would flatten the crest. */
+.listening-screen__mic-wing {
   display: block;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
 /* Sits where the wing's own mic glyph used to be cut out — drawn as a solid

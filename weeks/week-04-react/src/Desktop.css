@@ -1,0 +1,353 @@
+.desktop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.mac-menubar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  color: #1d1d1f;
+  pointer-events: auto;
+  z-index: 12;
+}
+
+.mac-menubar-leading,
+.mac-menubar-trailing {
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.mac-apple-wrap {
+  width: 33px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+
+.mac-apple {
+  width: 12px;
+  height: 15px;
+  display: block;
+}
+
+.mac-app-name {
+  padding: 4px 9px 4px 11px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 16px;
+  letter-spacing: 0;
+}
+
+.mac-menu-item {
+  padding: 4px 9px;
+  font-size: 13px;
+  font-weight: 590;
+  line-height: 16px;
+}
+
+.mac-wifi {
+  width: 34.5px;
+  height: 20px;
+  display: block;
+  background: currentColor;
+  -webkit-mask: url('/mac/wifi.svg') center / contain no-repeat;
+  mask: url('/mac/wifi.svg') center / contain no-repeat;
+}
+
+.mac-control {
+  width: 31.15px;
+  height: 21.41px;
+  display: block;
+  background: currentColor;
+  -webkit-mask: url('/mac/control-center.svg') center / contain no-repeat;
+  mask: url('/mac/control-center.svg') center / contain no-repeat;
+}
+
+.mac-spotlight {
+  width: 31px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 4px 9px;
+}
+
+.mac-spotlight svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
+
+.mac-datetime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 9px;
+  font-size: 13.1px;
+  font-weight: 590;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.desk-item,
+.canvas-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+  cursor: grab;
+  z-index: 11;
+  pointer-events: auto;
+  transform-origin: 50% 42%;
+}
+
+.canvas-item.is-docked {
+  z-index: 13;
+  cursor: default;
+  transform-origin: 50% 100%;
+  overflow: visible;
+}
+
+.canvas-item.is-loose {
+  cursor: grab;
+}
+
+.canvas-item.is-popping {
+  z-index: 22;
+  pointer-events: none;
+  transition: none;
+  animation: icon-foam-pop var(--pop-ms, 720ms) linear both;
+  animation-delay: calc(var(--pop-cycle, 0) * 0ms);
+}
+
+.canvas-item.is-landed:not(.is-dragging) {
+  transform: rotate(var(--land-rot, 0deg));
+}
+
+.canvas-item.is-dragging {
+  z-index: 24;
+  cursor: grabbing;
+  transition: none;
+  transform: none;
+}
+
+.desk-icon .mac-asset {
+  width: 100%;
+  height: 100%;
+}
+
+.desk-ghost {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  margin: 0 8px;
+  border-radius: 8px;
+  background: rgba(10, 132, 255, 0.16);
+  pointer-events: none;
+  z-index: 9;
+}
+
+.desk-item.is-dragging {
+  z-index: 14;
+  cursor: grabbing;
+  transition: none;
+}
+
+.desk-icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  flex: none;
+}
+
+.mac-asset {
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.desk-icon .mac-asset {
+  width: 100%;
+  height: 100%;
+}
+
+.desk-name {
+  max-width: 88px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: center;
+  letter-spacing: 0;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: text-shadow 250ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.page.is-idle .desk-name {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.7),
+    0 0 4px rgba(0, 0, 0, 0.45);
+}
+
+.dock-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.dock-layer.is-gone {
+  visibility: hidden;
+}
+
+.desk-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 55px;
+  padding: 8px;
+  border-radius: 15px;
+  background: rgba(230, 230, 230, 0.62);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.25),
+    inset 0 2.5px 1.5px -2.5px #808080,
+    inset 0 -2.5px 1.5px -2.5px #808080,
+    inset 0 16px 16px -16px rgb(22 22 22 / 0.35),
+    inset 0 -16px 16px -16px rgb(22 22 22 / 0.35);
+  backdrop-filter: blur(40px) saturate(160%);
+  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  pointer-events: auto;
+}
+
+.dock-layer.is-on-mat .desk-dock {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: #e4e4e4;
+}
+
+.page.is-done .dock-layer {
+  visibility: hidden;
+}
+
+.desk-dock-app,
+.desk-dock-slot {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  flex: none;
+}
+
+.desk-dock-slot.has-rule {
+  margin-left: 11px;
+}
+
+.desk-dock.is-empty {
+  opacity: 0.55;
+}
+
+.desk-dock-app .mac-asset {
+  width: 36px;
+  height: 36px;
+}
+
+.desk-dock-rule {
+  width: 1px;
+  height: 36px;
+  margin: 0 5px;
+  background: #404040;
+  opacity: 0.45;
+  flex: none;
+}
+
+@media (max-width: 1280px) {
+  .desk-dock {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .desk-dock-app,
+  .desk-dock-app .mac-asset {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@keyframes icon-foam-pop {
+  0% {
+    transform: translate(var(--from-x, 0px), var(--from-y, 0px)) scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+    animation-timing-function: cubic-bezier(0.12, 0.82, 0.18, 1);
+  }
+  30% {
+    transform: translate(
+        calc(var(--from-x, 0px) * 0.28 + var(--hop-x, 0px)),
+        calc(var(--from-y, 0px) * 0.22 + var(--hop-y, 0px))
+      )
+      scale(1.42) rotate(var(--spin, 4deg));
+    filter: drop-shadow(0 24px 18px rgba(0, 0, 0, 0.3));
+    animation-timing-function: linear;
+  }
+  38% {
+    transform: translate(
+        calc(var(--from-x, 0px) * 0.2 + var(--hop-x, 0px)),
+        calc(var(--from-y, 0px) * 0.14 + var(--hop-y, 0px))
+      )
+      scale(1.42) rotate(var(--spin, 4deg));
+    filter: drop-shadow(0 24px 18px rgba(0, 0, 0, 0.3));
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.18);
+  }
+  92% {
+    transform: translate(0, 0) scale(0.97) rotate(var(--land-rot, 6deg));
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.16));
+    animation-timing-function: cubic-bezier(0.22, 0.9, 0.32, 1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(var(--land-rot, 6deg));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-item.is-popping {
+    animation: none;
+  }
+}

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Checkmark } from '@carbon/icons-react'
 
-export default function SelectRow({ label, value, onChange, options, compact = false }) {
+export default function SelectRow({ label, value, onChange, options, compact = false, onRename }) {
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
   const rowRef = useRef(null)
 
   // Native <select> popups can't be themed cross-browser, so the option list
@@ -30,20 +32,61 @@ export default function SelectRow({ label, value, onChange, options, compact = f
     setOpen(false)
   }
 
+  function startRename() {
+    if (!onRename) return
+    setOpen(false)
+    setDraft(value)
+    setEditing(true)
+  }
+
+  function commitRename() {
+    const trimmed = draft.trim()
+    if (trimmed && trimmed !== value) onRename(trimmed)
+    setEditing(false)
+  }
+
+  function handleRenameKeyDown(e) {
+    if (e.key === 'Enter') commitRename()
+    else if (e.key === 'Escape') setEditing(false)
+  }
+
   return (
     <div className={`field-row select-row${compact ? ' select-row--compact' : ''}`} ref={rowRef}>
       {label && <span className="field-row__label">{label}</span>}
-      <button
-        type="button"
-        className={`field-row__value select-row__trigger${label ? '' : ' select-row__display--flush'}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={label || 'Select'}
-      >
-        <span>{value}</span>
-        <ChevronDown size={compact ? 12 : 16} className="select-row__chevron" />
-      </button>
+      {editing ? (
+        <input
+          type="text"
+          className={`select-row__edit-input${label ? '' : ' select-row__edit-input--flush'}`}
+          value={draft}
+          autoFocus
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={handleRenameKeyDown}
+          aria-label={label ? `Rename ${label}` : 'Rename version'}
+        />
+      ) : (
+        <button
+          type="button"
+          className={`field-row__value select-row__trigger${label ? '' : ' select-row__display--flush'}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={label || 'Select'}
+        >
+          <span
+            className="select-row__value-text"
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              startRename()
+            }}
+          >
+            {value}
+          </span>
+          <ChevronDown size={compact ? 12 : 16} className="select-row__chevron" />
+        </button>
+      )}
       {open && (
         <div className="select-row__popover" role="listbox">
           {options.map((opt) => (

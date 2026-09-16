@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Search, Location, Compare, Filter, CheckmarkOutline } from '@carbon/icons-react'
 import gradientDisc from '../../assets/figma/processing/gradient-disc-mono.svg'
 import pencilIcon from '../../assets/figma/processing/pencil-icon.svg'
@@ -28,6 +28,10 @@ const CAP_RADIUS = ARC_STROKE / 2
 // regardless of the (much thicker) band width, so this isn't derived from
 // ARC_STROKE: 16 Figma px / 3.5733.
 const CHECKPOINT_RADIUS = 4.5
+// How many points along a segment's own arc to animate the leading-tip cap
+// through — enough for the round dot to visibly follow the curve rather
+// than cutting corners across it.
+const TIP_KEYFRAMES = 16
 
 // Same 0deg-at-12-o'clock, clockwise-positive convention as WatchFace.jsx.
 function polar(deg, center = CENTER) {
@@ -60,26 +64,51 @@ function describeSegment(startDeg, endDeg) {
 // cleanup even runs), so the animation is only ever responsible for the
 // live sweep while a segment is actually the active one.
 //
-// Caps stay flat (butt) at every internal checkpoint join — a round cap on
-// all five segments is what caused the little dots/bumps fixed earlier.
-// Only the segment currently sweeping gets round caps, which is what puts a
-// rounded tip on the live leading edge; its round *start* cap extends back
-// over the previous segment, which is already drawn solid black there, so
-// it lands black-on-black and never reads as a bump. Once a segment is
-// done it goes back to butt, so the join it now forms with the next one
-// stays flush.
+// Caps stay flat (butt) on every segment — a round cap on the stroke itself
+// is what caused the little dots/bumps at the five checkpoint joins, since
+// it extends past its own mathematical endpoint by half the stroke width
+// and each segment casts its own drop-shadow around that bulge.
 //
-// This used to be a separate <circle> tip whose cx/cy were animated via the
-// Web Animations API. Safari doesn't support cx/cy as animatable CSS
-// properties, so on iOS that animation silently did nothing and the tip sat
-// frozen at the segment's start — leaving the sweeping edge looking flat.
-// Letting the stroke's own linecap do the work needs no scripting at all
-// and renders the same everywhere.
+// The rounded leading edge is therefore a separate circle riding the live
+// tip, not a linecap. Briefly it *was* a linecap on the active segment, and
+// that is what made checkpoints flash: the round cap overshot the boundary
+// by half a stroke width (~5.3deg of arc, against a checkpoint dot only
+// ~2deg wide), then retracted the instant the segment flipped to butt on
+// becoming done. The incoming segment should have covered that spot, but at
+// strokeDashoffset=1 its dash has zero length and browsers don't reliably
+// draw round caps on a zero-length dash, so the boundary dropped back to
+// gray track for a frame. The checkpoint dot there is mix-blend-mode:
+// difference white, which renders white over black and dark over gray, so
+// that one-frame gap read as a flash. A tip circle has no such gap: this
+// segment's tip finishes at exactly the coordinates where the next
+// segment's tip starts, so the handoff is continuous.
+//
+// The tip moves by animating `transform: translate(...)`, not cx/cy. Safari
+// doesn't support cx/cy as animatable CSS properties, so animating those
+// silently did nothing on iOS and left the tip frozen at the segment's
+// start, making the sweeping edge look flat. A pure translate is
+// origin-independent, so it needs no transform-box/transform-origin setup
+// and behaves the same in every engine.
 function ArcSegment({ startDeg, endDeg, state, durationMs }) {
   const pathRef = useRef(null)
+  const tipRef = useRef(null)
   const d = describeSegment(startDeg, endDeg)
+  const tipOrigin = polar(startDeg)
 
-  useEffect(() => {
+  // useLayoutEffect, not useEffect, and that difference is the whole reason
+  // the sweep used to stall at every checkpoint. A newly-active segment
+  // renders with strokeDashoffset=1, i.e. nothing drawn yet. useEffect runs
+  // *after* the browser paints, so the checkpoint frame was painted with the
+  // finished segment full and the new one still empty, and only then did the
+  // animation start — a guaranteed dead frame at every boundary, and a long
+  // one here because that same frame is the most expensive one to paint (two
+  // drop-shadowed paths changing, plus the tip cap unmounting and
+  // remounting). Reading it back: the line arrives at a
+  // checkpoint, hangs, then resumes. useLayoutEffect runs after the DOM
+  // update but before paint, so the animation is already running by the time
+  // that frame reaches the screen and one segment hands off to the next
+  // without a gap.
+  useLayoutEffect(() => {
     if (state !== 'active') return
     const pathEl = pathRef.current
     if (!pathEl) return
@@ -88,18 +117,62 @@ function ArcSegment({ startDeg, endDeg, state, durationMs }) {
       easing: 'linear',
       fill: 'forwards',
     })
-    return () => pathAnim.cancel()
-  }, [state, durationMs])
+
+    const tipEl = tipRef.current
+    const tipAnim = tipEl?.animate(
+      Array.from({ length: TIP_KEYFRAMES + 1 }, (_, i) => {
+        const t = i / TIP_KEYFRAMES
+        const point = polar(startDeg + (endDeg - startDeg) * t)
+        return {
+          transform: `translate(${(point.x - tipOrigin.x).toFixed(3)}px, ${(point.y - tipOrigin.y).toFixed(3)}px)`,
+        }
+      }),
+      { duration: durationMs, easing: 'linear', fill: 'forwards' },
+    )
+
+    return () => {
+      pathAnim.cancel()
+      tipAnim?.cancel()
+    }
+  }, [state, durationMs, startDeg, endDeg, tipOrigin.x, tipOrigin.y])
 
   return (
-    <path
-      ref={pathRef}
-      d={d}
-      pathLength="1"
-      strokeDasharray="1"
-      strokeDashoffset={state === 'done' ? 0 : 1}
-      className={`processing-screen__arc${state === 'active' ? ' processing-screen__arc--active' : ''}`}
-    />
+    <>
+      {/* Pending segments aren't rendered at all rather than drawn and then
+          hidden by the dash. Hiding them still left a sub-pixel sliver of
+          stroke at each one's end point, which the drop-shadow blurred into
+          a visible hairline — and since a segment ends exactly where a
+          checkpoint dot sits, that put a little radial tick across every
+          dot. Not drawing them also spares four filtered paths per frame. */}
+      {state !== 'pending' && (
+        <path
+          ref={pathRef}
+          d={d}
+          pathLength="1"
+          /* "1 2", not "1". A single value means "1 on, 1 off" — a pattern
+             2 long — so hiding the segment with strokeDashoffset=1 maps the
+             path onto pattern 1..2, and 2 wraps to 0 where the next "on"
+             starts, landing that boundary exactly on the path's end point.
+             Rounding there is what produced the sliver above. Making the
+             gap 2 pushes the next "on" out to pattern 3, i.e. path position
+             2 — well past the end — so no boundary ever falls on the path.
+             Every offset in 0..1 still maps to the same drawn fraction, so
+             the sweep animation is unchanged. */
+          strokeDasharray="1 2"
+          strokeDashoffset={state === 'done' ? 0 : 1}
+          className="processing-screen__arc"
+        />
+      )}
+      {state === 'active' && (
+        <circle
+          ref={tipRef}
+          cx={tipOrigin.x}
+          cy={tipOrigin.y}
+          r={CAP_RADIUS}
+          className="processing-screen__arc-cap"
+        />
+      )}
+    </>
   )
 }
 

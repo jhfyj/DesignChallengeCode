@@ -36,14 +36,24 @@
   border-radius: 50%;
 }
 
-/* Frosted-glass disc sitting on top of the gradient — the arc/track now
-   fill the full 84px band around it edge to edge (see ARC_STROKE in
-   ProcessingScreen.jsx), so the mono gradient's only remaining job is a
-   faint vignette behind this glass, not a visible ring of its own.
-   Nearly-opaque white (matching the flat, near-white center of the Figma
-   frame) rather than the barely-there tint this used to be, with a bright
-   rim and an inner highlight standing in for a glass edge catching light,
-   plus a soft diagonal shine (::before) mimicking a reflection. */
+/* The flat white center, matching the near-white disc in the Figma frame
+   and the listening screen's own white face — so moving between the two
+   doesn't dim.
+
+   Opaque, not the frosted glass this used to be. The gradient underneath
+   (gradient-disc-mono.svg) runs #3a3a3a -> #101010 -> black across most of
+   its area, so at the old rgba(255,255,255,0.9) a tenth of that came
+   through and landed around #e8e8e8 — visibly gray rather than white. A
+   translucent disc can't sit on a near-black backdrop and still read as
+   white; the fix is to stop letting the backdrop through at all.
+
+   That also retires the effects that only made sense while it was glass:
+   backdrop-filter (nothing shows through an opaque fill, and it was
+   re-blurring an 834px circle for free), the white inner highlight and
+   diagonal ::before shine (both white-on-white now, invisible), and the
+   dark bottom inset shadow, which was actively graying the lower half.
+   The outer drop shadow stays — it sits outside the disc and is what
+   separates it from the track band. */
 .processing-screen__disc {
   position: absolute;
   left: 11.10cqw; /* 119px */
@@ -52,27 +62,9 @@
   height: 77.80cqw;
   border-radius: 50%;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(1.8cqw) saturate(120%);
-  -webkit-backdrop-filter: blur(1.8cqw) saturate(120%);
+  background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow:
-    inset 0 1.4cqw 2.2cqw rgba(255, 255, 255, 0.6),
-    inset 0 -1.1cqw 1.7cqw rgba(0, 0, 0, 0.05),
-    0 0.9cqw 2.6cqw rgba(0, 0, 0, 0.22);
-}
-
-.processing-screen__disc::before {
-  content: '';
-  position: absolute;
-  top: -18%;
-  left: -8%;
-  width: 65%;
-  height: 50%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  filter: blur(0.6cqw);
-  transform: rotate(-18deg);
+  box-shadow: 0 0.9cqw 2.6cqw rgba(0, 0, 0, 0.22);
 }
 
 .processing-screen__arc-svg {
@@ -121,13 +113,15 @@
   /* Matches ARC_STROKE in ProcessingScreen.jsx and .processing-screen__track
      above — fills the full ~84px band from the Figma frame edge to edge. */
   stroke-width: 23.5;
-  /* Flat by default — a round cap on every segment left a small bump/dot at
+  /* Flat, not round — a round cap on every segment left a small bump/dot at
      each of the 5 checkpoint boundaries where two segments meet, since a
      round cap extends past its own mathematical endpoint by half the
      stroke width. Flat caps butt flush against each other so the whole
      ring reads as one continuous line, not five capsules with dots between
      them, even though it's still five independently-timed segments underneath.
-     The one exception is the segment currently sweeping — see below. */
+     Rounding the live leading edge is the arc-cap circle's job instead —
+     see the comment on ArcSegment for why a linecap can't do it without
+     making the checkpoints flash. */
   stroke-linecap: butt;
   /* No offset — an offset drop-shadow on a curved, butt-jointed stroke reads
      as a hard secondary line trailing the arc rather than a soft shadow,
@@ -137,17 +131,11 @@
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
 }
 
-/* Only the segment that's mid-sweep, which is what rounds the live leading
-   edge. Its round start cap overlaps the previous segment (already solid
-   black there), so it costs nothing at that join, and the segment reverts
-   to butt the moment it's done — see the comment on ArcSegment. */
-.processing-screen__arc--active {
-  stroke-linecap: round;
-}
-
-/* Stands in for a round stroke-linecap at the one place that's an edge of
-   the whole ring but never anyone's sweeping tip: the fixed start at 12
-   o'clock, which goes flat again once its segment is done. */
+/* Stands in for a round stroke-linecap at the two places that actually are
+   an edge of the whole ring: the fixed start at 12 o'clock, and the live
+   leading tip of whichever segment is sweeping (moved along its arc by a
+   translate animation — see ArcSegment). Every internal checkpoint join
+   stays flat instead. */
 .processing-screen__arc-cap {
   fill: #000000;
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));

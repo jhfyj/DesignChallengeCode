@@ -5,7 +5,6 @@ import { MIN_COHERENT_HOLD_MS } from '../../hooks/useAssistantFlow.js'
 import DigitalClockFace from './DigitalClockFace.jsx'
 import { gaussian, smoothPath, buildMorphTrack, LINE_LENGTH, LINE_MARGIN } from './waveMath.js'
 import { MIC_WING_D, MIC_WING_TRANSFORM, RIM_CENTER, RIM_RADIUS } from './rimShape.js'
-import micWing from '../../assets/figma/listening/mic-wing-solid.svg'
 import './ListeningScreen.css'
 
 const SIZE = 300
@@ -67,6 +66,10 @@ function buildMorphPoints(headDistance) {
 const WING_PATH_D = MIC_WING_D
 const WING_TRANSFORM = MIC_WING_TRANSFORM
 const WING_BOX = { left: 12.8 * 10.72, top: 75.18 * 10.72, width: 74.41 * 10.72, height: 26.08 * 10.72 }
+// The wing artwork's own coordinate space — the box above maps onto exactly
+// this, so the inline wing below lands on the same pixels as the mask's
+// cutout without needing a transform of its own.
+const WING_VIEWBOX = '0 0 676 236.897'
 
 // Bottom-center of the wing's own box, in the same 1072-unit space — the
 // mask's cutout is wrapped in a <g> that plays the exact same boot
@@ -560,7 +563,19 @@ export default function ListeningScreen({ visible, onStart, onStop, micBootId, w
           aria-label={pressed ? 'Recording — click to stop' : 'Click to speak'}
           tabIndex={visible && !morphing && !wingHidden ? 0 : -1}
         >
-          <img src={micWing} alt="" />
+          {/* Inline, off the same WING_PATH_D the dial's cutout uses, rather
+              than the exported mic-wing-solid.svg. That asset still carries
+              the raw Figma outline, which meets the rim at a slight angle —
+              so drawing it here put the unwelded edge back on top of the
+              welded hole underneath, and the corner survived. */}
+          <svg
+            className="listening-screen__mic-wing"
+            viewBox={WING_VIEWBOX}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path d={WING_PATH_D} fill="#ffffff" />
+          </svg>
           {pressed ? (
             <PauseFilled size={32} className="listening-screen__mic-icon" />
           ) : (

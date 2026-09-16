@@ -1,15 +1,14 @@
+import SegmentedRow from './SegmentedRow.jsx'
+
+// A fixed Off/On SegmentedRow — same markup/CSS/sliding-pill motion, just
+// mapped to a boolean instead of an arbitrary options list.
 export default function ToggleRow({ label, value, onChange }) {
   return (
-    <div className="field-row toggle-row">
-      <span className="field-row__label">{label}</span>
-      <div className="toggle-row__buttons">
-        <button type="button" className={!value ? 'is-active' : ''} onClick={() => onChange(false)}>
-          Off
-        </button>
-        <button type="button" className={value ? 'is-active' : ''} onClick={() => onChange(true)}>
-          On
-        </button>
-      </div>
-    </div>
+    <SegmentedRow
+      label={label}
+      value={value ? 'On' : 'Off'}
+      options={['Off', 'On']}
+      onChange={(opt) => onChange(opt === 'On')}
+    />
   )
 }

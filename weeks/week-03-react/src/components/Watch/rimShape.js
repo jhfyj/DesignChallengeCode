@@ -103,14 +103,49 @@ export const ACCEPT_OUTER_D = `M400 127.5L148 381.5L0 328.5C111 316 44 156.5 201
 export const ACCEPT_ICON_D =
   'M209.829 159.089C208.267 157.527 205.734 157.527 204.172 159.089C202.61 160.651 202.61 163.183 204.172 164.745L225.926 186.5H178.417C176.208 186.5 174.417 188.291 174.417 190.5C174.417 192.709 176.208 194.5 178.417 194.5H225.927L204.172 216.255C202.61 217.817 202.61 220.35 204.172 221.912C205.734 223.474 208.267 223.474 209.829 221.912L238.412 193.329C239.974 191.767 239.974 189.234 238.412 187.672L209.829 159.089Z'
 
-// The listening screen's single mic protrusion — same path data as
-// mic-wing-solid.svg, in its own 676x236.897 viewBox.
-export const MIC_WING_D =
-  'M212 44.3818C291.5 -13.6188 387 -18.6182 470 52.3818C536.4 109.182 636.667 71.0484 676 35.8818C617.333 112.215 532 238.481 522 236.882C512 235.282 200.5 189.882 46 167.382L0 28.3818C86.4999 104.381 174 72.1054 212 44.3818Z'
+// The listening screen's single mic protrusion — mic-wing-solid.svg's path,
+// in its own 676x236.897 viewBox, welded onto the rim the same way the two
+// direction wings above are.
+//
+// Straight from Figma it isn't welded, and both ends show it: the right tip
+// sat 4.7 units outside the rim and left it 10.2deg off tangent, and the
+// left tip — despite landing within 0.06 of the rim, close enough to look
+// deliberate — still left at 11.4deg off. That second one is the instructive
+// case: position alone was already right there, and it *still* produced a
+// visible corner, because what the eye reads at a join is the change in
+// direction, not the gap. Both tips are re-welded below.
 const MIC_BOX = { left: 12.8 * CQ, top: 75.18 * CQ, width: 74.41 * CQ, height: 26.08 * CQ }
 const MIC_VIEWBOX = { width: 676, height: 236.897 }
 const MIC_SCALE = { x: MIC_BOX.width / MIC_VIEWBOX.width, y: MIC_BOX.height / MIC_VIEWBOX.height }
 export const MIC_WING_TRANSFORM = `translate(${MIC_BOX.left} ${MIC_BOX.top}) scale(${MIC_SCALE.x} ${MIC_SCALE.y})`
+
+// The rim in the mic wing's own local space. The box's two scales differ by
+// 0.015%, so the rim is technically a hair elliptical here — 0.07 units
+// across the whole radius, well under a device pixel — and treating it as a
+// circle on the x scale keeps this arithmetic honest about what it is.
+const MIC_CIRCLE = {
+  cx: (RIM_CENTER - MIC_BOX.left) / MIC_SCALE.x,
+  cy: (RIM_CENTER - MIC_BOX.top) / MIC_SCALE.y,
+}
+const MIC_LOCAL_RADIUS = RIM_RADIUS / MIC_SCALE.x
+
+// Only the wing's *top* edge is welded — the two tips, and the handles of
+// the curves that run between them over the top of the protrusion. The
+// bottom edge (tip, down to 522,236.882, back along to 46,167.382) falls
+// outside the rim entirely and is clipped away by it, so its shape never
+// shows; its endpoints just have to follow the tips so the path stays closed.
+const MIC_RIGHT_TIP = ontoCircle(MIC_CIRCLE, MIC_LOCAL_RADIUS, { x: 676, y: 35.8818 })
+const MIC_RIGHT_HANDLE = tangentEndHandle(MIC_CIRCLE, MIC_RIGHT_TIP, { x: 636.667, y: 71.0484 })
+const MIC_LEFT_TIP = ontoCircle(MIC_CIRCLE, MIC_LOCAL_RADIUS, { x: 0, y: 28.3818 })
+const MIC_LEFT_HANDLE = tangentStartHandle(MIC_CIRCLE, MIC_LEFT_TIP, { x: 86.4999, y: 104.381 })
+
+export const MIC_WING_D =
+  `M212 44.3818C291.5 -13.6188 387 -18.6182 470 52.3818` +
+  `C536.4 109.182 ${MIC_RIGHT_HANDLE.x} ${MIC_RIGHT_HANDLE.y} ${MIC_RIGHT_TIP.x} ${MIC_RIGHT_TIP.y}` +
+  `C617.333 112.215 532 238.481 522 236.882` +
+  `C512 235.282 200.5 189.882 46 167.382` +
+  `L${MIC_LEFT_TIP.x} ${MIC_LEFT_TIP.y}` +
+  `C${MIC_LEFT_HANDLE.x} ${MIC_LEFT_HANDLE.y} 174 72.1054 212 44.3818Z`
 
 // How finely the boundary is sampled around the full circle. 1440 is a
 // quarter-degree per step — fine enough that the near-tangent stretch where

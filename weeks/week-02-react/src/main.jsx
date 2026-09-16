@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import 'dialkit/styles.css'
 // Self-hosted (not the Google Fonts CDN link this used to be): canvas export
 // embeds font files by fetching them same-origin, which is far more reliable
 // than a cross-origin CDN fetch from inside html-to-image's SVG pipeline.

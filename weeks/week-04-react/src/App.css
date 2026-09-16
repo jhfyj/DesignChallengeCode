@@ -1,0 +1,204 @@
+.page {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.headline-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.headline {
+  position: relative;
+  margin: 0;
+  max-width: min(92vw, 18ch);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: clamp(28px, 5.6vw, 64px);
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #000;
+  pointer-events: none;
+}
+
+.headline-line {
+  display: block;
+}
+
+.headline em {
+  font-family: var(--serif);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 1.55em;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.foam-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.foam-stage.is-done,
+.foam-stage.is-rippling {
+  pointer-events: auto;
+}
+
+.foam-pocket {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.foam-stage.is-done .foam-pocket,
+.foam-stage.is-rippling .foam-pocket {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.foam-stage.is-idle .foam-tile.is-active {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  transition:
+    transform 0.22s cubic-bezier(0.22, 0.84, 0.32, 1),
+    filter 0.22s ease;
+  filter: drop-shadow(-4px -4px 8px rgba(0, 0, 0, 0.14));
+}
+
+.foam-stage.is-idle:has(.foam-trigger:hover) .foam-tile.is-active,
+.foam-stage.is-idle:has(.foam-trigger:focus-visible) .foam-tile.is-active {
+  transform: scale(1.05);
+  filter: drop-shadow(-5px -5px 10px rgba(0, 0, 0, 0.18));
+}
+
+@property --tile-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+.foam-tile {
+  --tile-fill: #ffffff;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: --tile-fill 250ms ease;
+}
+
+.foam-body {
+  fill: var(--tile-fill);
+}
+
+
+.foam-tile.is-lifting {
+  z-index: 6;
+  will-change: transform;
+  animation: foam-lift var(--lift-ms, 720ms) linear;
+}
+
+.foam-thickness,
+.foam-sheen,
+.foam-pebbles {
+  pointer-events: none;
+}
+
+.foam-tile:not(.is-textured) .foam-sheen,
+.foam-tile:not(.is-textured) .foam-pebbles {
+  display: none;
+}
+
+.foam-thickness {
+  display: none;
+  transform: translate(0, 0);
+  opacity: 0;
+  filter: brightness(0.58);
+}
+
+.foam-tile.is-lifting .foam-thickness {
+  display: unset;
+  will-change: transform, opacity;
+  animation: foam-edge var(--lift-ms, 720ms) linear;
+}
+
+.foam-trigger {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: calc(var(--tile) * var(--peek) + 12px);
+  height: calc(var(--tile) * var(--peek) + 12px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 3;
+}
+
+@keyframes foam-lift {
+  0% {
+    transform: translateY(0) scale(1);
+    animation-timing-function: cubic-bezier(0.15, 0.9, 0.2, 1);
+  }
+  30% {
+    transform: translateY(-11px) scale(1.07);
+    animation-timing-function: linear;
+  }
+  38% {
+    transform: translateY(-11px) scale(1.07);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.15);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes foam-edge {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+    animation-timing-function: cubic-bezier(0.15, 0.9, 0.2, 1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(5px, 13px);
+    animation-timing-function: linear;
+  }
+  38% {
+    opacity: 1;
+    transform: translate(5px, 13px);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foam-tile.is-lifting,
+  .foam-tile.is-lifting .foam-thickness {
+    animation: none;
+  }
+
+  .foam-tile {
+    transition: none;
+  }
+
+  .foam-stage.is-idle .foam-tile.is-active {
+    transition: none;
+  }
+}

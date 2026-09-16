@@ -10,30 +10,60 @@
   font-family: system-ui, sans-serif;
 }
 
-/* Now the first item inside control-panel__body (not a sibling of it), so the
-   native dialkit toolbar scrolls away with everything else instead of
-   staying pinned. */
+/* First item inside control-panel__body (not a sibling of it), so it
+   scrolls away with everything else instead of staying pinned. Replaces the
+   old dialkit toolbar — see VersionBar.jsx for why (that panel's built-in
+   version/Copy toolbar only ever operated on an empty parameter config). */
 .control-panel__native {
   flex-shrink: 0;
+  padding-top: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* dialkit's own native panel header ships a margin-bottom baked into its
-   styles.css on top of its border-bottom divider; the margin is zeroed here
-   so the gap into our custom Shuffle button below is controlled entirely by
-   control-panel__body's own gap (matching every other gap in the panel)
-   instead of stacking with dialkit's built-in spacing. The divider line
-   itself is kept. */
-.control-panel__native .dialkit-folder-header.dialkit-panel-header {
-  margin-bottom: 0;
+.version-bar__title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
 }
 
-/* dialkit-panel-inner also ships its own 12px left/right padding, which sat
-   on top of control-panel__body's 16px padding and made the native toolbar
-   12px more inset than every custom row below it. Zeroed here so the native
-   toolbar lines up flush with everything else. */
-.control-panel__native .dialkit-panel-inner {
-  padding-left: 0;
-  padding-right: 0;
+.version-bar__row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+/* Override select-row--compact's fixed 80px width (fine for a short value
+   like "Free"/"Swiss", too narrow for "Version 10") while keeping its
+   smaller font/height — this row should split its space with the two icon
+   buttons instead of the dropdown claiming a fixed width. */
+.version-bar__row .select-row--compact {
+  width: auto;
+  flex: 1;
+}
+
+.version-bar__icon-button {
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: var(--color-bg-surface);
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.version-bar__icon-button:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface-hover);
 }
 
 .control-panel__body {
@@ -85,6 +115,7 @@
 }
 
 .control-panel__tab {
+  position: relative;
   flex: 1;
   padding: 8px 0;
   border-radius: 8px;
@@ -94,11 +125,26 @@
   font-size: 0.8rem;
   border: none;
   cursor: pointer;
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .control-panel__tab.is-active {
-  background: var(--color-bg-surface-hover);
   color: var(--color-text-primary);
+}
+
+/* The sliding background itself — see TabBar.jsx's motion.span (layoutId).
+   Sits behind the label (z-index) and fills its host button completely. */
+.control-panel__tab-pill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-surface-hover);
+  border-radius: 8px;
+  z-index: 0;
+}
+
+.control-panel__tab-label {
+  position: relative;
+  z-index: 1;
 }
 
 .content-section__placeholder {

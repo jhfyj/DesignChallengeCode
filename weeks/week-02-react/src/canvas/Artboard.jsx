@@ -248,7 +248,7 @@ export default function Artboard({
           grid={grid}
           hideLock
           onStartResize={(e, _placement, handle) =>
-            infoDrag.startResize(e, selectedInfoOverlay.index, selectedInfoOverlay.geometry, handle)
+            infoDrag.startResize(e, selectedInfoOverlay.index, selectedInfoOverlay.geometry, handle, selectedInfoOverlay.rotation)
           }
           onStartRotate={(e, _placement, boxEl) =>
             infoDrag.startRotate(e, selectedInfoOverlay.index, selectedInfoOverlay.rotation, boxEl)

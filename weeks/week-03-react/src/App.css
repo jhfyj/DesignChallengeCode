@@ -1,11 +1,19 @@
 .stage {
-  min-height: 100vh;
+  /* The one height everything else is derived from — Watch.css sizes the
+     case and both straps off this so they add up to exactly one viewport,
+     with the strap ends landing on the top and bottom edges. Keep it a
+     single source of truth: a mismatch here and there leaves either a gap
+     at the edges or a scrollbar. */
+  --stage-h: 100vh;
+  height: var(--stage-h);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
-  padding: 40px 20px;
-  background: radial-gradient(circle at 50% 35%, #1a1c22 0%, #0b0c10 60%, #060608 100%);
+  /* No padding: the straps are meant to run right off both edges. */
+  padding: 0;
+  /* A white surface with the light falling from above — not a flat #fff,
+     which would leave the watch looking cut out and pasted on. */
+  background: radial-gradient(120% 90% at 50% 12%, #ffffff 0%, #f7f7f9 52%, #eceef2 100%);
   overflow: hidden;
 }

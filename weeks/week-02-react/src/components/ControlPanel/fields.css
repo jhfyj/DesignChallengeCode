@@ -14,10 +14,10 @@
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
-  /* This panel replaces control-panel__body's content entirely (no native
-     dialkit toolbar above it, unlike the Design/Content/Assets tabs), so
-     Back sits flush against control-panel__body's zero top padding without
-     its own top padding to give it breathing room. Bottom padding + border
+  /* This panel replaces control-panel__body's content entirely (no
+     VersionBar above it, unlike the Design/Content/Assets tabs), so Back
+     sits flush against control-panel__body's zero top padding without its
+     own top padding to give it breathing room. Bottom padding + border
      forms a divider separating Back from the title below. */
   padding: 16px 0 14px;
   border-bottom: 1px solid var(--color-border);
@@ -515,6 +515,7 @@
 }
 
 .toggle-row__buttons button {
+  position: relative;
   background: none;
   border: none;
   color: var(--color-text-secondary);
@@ -523,11 +524,30 @@
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .toggle-row__buttons button.is-active {
-  background: var(--color-bg-surface-hover);
   color: var(--color-text-primary);
+}
+
+/* The sliding background itself — see SegmentedRow.jsx's motion.span
+   (layoutId). Sits behind the label and fills its host button completely. */
+.toggle-row__pill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-surface-hover);
+  border-radius: 4px;
+  z-index: 0;
+}
+
+.toggle-row__label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 /* Select — a custom popover (not a native <select>) since the native
@@ -601,6 +621,32 @@
 .select-row__option svg {
   flex-shrink: 0;
   color: var(--white);
+}
+
+.select-row__value-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-row__edit-input {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  margin-left: auto;
+  background: var(--color-bg-sunken);
+  border: none;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: inherit;
+}
+
+.select-row__edit-input--flush {
+  margin-left: 0;
 }
 
 /* Compact — the Style Mode select sits directly beside the Shuffle button
@@ -1010,14 +1056,17 @@
 .asset-grid {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 10px;
+  width: 100%;
 }
 
 .asset-card {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-bg-surface-hover);
@@ -1026,17 +1075,20 @@
 
 .asset-card__thumb {
   position: relative;
+  width: 100%;
   aspect-ratio: 1;
-  margin: 1px 1px 0;
+  margin: 8px 0 0;
   border-radius: 9px;
-  background: var(--color-bg-surface);
   overflow: hidden;
 }
 
 .asset-card__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .asset-card__glyph {
@@ -1047,15 +1099,17 @@
   justify-content: center;
   color: var(--color-text-primary);
   font-family: 'Inter', sans-serif;
-  font-size: 44px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1;
 }
 
 .asset-card__name {
+  align-self: stretch;
   padding: 8px 8px;
   overflow: hidden;
   color: var(--color-text-subtle);
+  background: var(--color-bg-surface);
   font-size: 0.7rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1063,16 +1117,16 @@
 
 .asset-card__badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--color-surface-inverse);
   color: var(--color-text-on-surface-inverse);
   cursor: pointer;

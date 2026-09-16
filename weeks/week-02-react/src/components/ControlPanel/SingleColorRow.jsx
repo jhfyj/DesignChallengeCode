@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import { Close, Eyedropper } from '@carbon/icons-react'
 import { paletteByName, applyPaletteOverrides, addableHexSwatches } from '../../canvas/colorPalettes.js'
+import TabBar from './TabBar.jsx'
 
 function hexToRgb(hex) {
   const m = hex.replace('#', '')
@@ -156,24 +157,10 @@ export default function SingleColorRow({ label, color, onChange, onReset, custom
       )}
       {open && (
         <div className="single-color-row__popover">
-          {/* Reuses the Design/Content/Assets tab bar's own look — the same
-              toggle style everywhere in the app reads as "pick a mode". */}
-          <div className="control-panel__tabbar">
-            <button
-              type="button"
-              className={`control-panel__tab${mode === 'Brand' ? ' is-active' : ''}`}
-              onClick={() => setMode('Brand')}
-            >
-              Brand
-            </button>
-            <button
-              type="button"
-              className={`control-panel__tab${mode === 'Custom' ? ' is-active' : ''}`}
-              onClick={() => setMode('Custom')}
-            >
-              Custom
-            </button>
-          </div>
+          {/* Reuses the Design/Content/Assets tab bar itself (not just its
+              CSS) — the same toggle look AND sliding-pill motion everywhere
+              in the app reads as "pick a mode". */}
+          <TabBar tabs={['Brand', 'Custom']} active={mode} onChange={setMode} />
 
           {mode === 'Brand' ? (
             <div className="single-color-row__groups">

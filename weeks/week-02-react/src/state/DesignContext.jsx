@@ -15,48 +15,103 @@ function emptySpeaker() {
   return { image: null, title: '', role: '', company: '', captionPosition: 'Below' }
 }
 
+// The single source of truth for what a brand-new, empty document looks
+// like — used both to seed the app's initial state below AND by the
+// version-control system (DesignProvider's addVersion/versions[0]) to reset
+// the canvas to "blank" when starting a new version. A factory (not a
+// shared constant) so every call gets its own fresh nested objects/arrays —
+// two versions' snapshots must never end up pointing at the very same
+// `content`/`image`/`placements` reference.
+function defaultDocument() {
+  return {
+    pageSize: 'Instagram Square (1x1)',
+    customWidth: 540,
+    customHeight: 540,
+    gap: 12,
+    margin: 6,
+    canvasColor: '#ffffff',
+    canvasPattern: 'No Background Pattern',
+    styleMode: 'Free',
+    gridType: 'Uniform',
+    customGridLines: [],
+    patternSize: 18,
+    dotColor: '#000000',
+    gridColor: '#000000',
+    gradientColor1: '#000000',
+    gradientOpacity1: 0,
+    gradientColor2: '#000000',
+    gradientOpacity2: 60,
+    gradientAngle: 180,
+    fileType: 'JPEG',
+    resMultiplier: 1,
+    colors: [],
+    paletteOverrides: {},
+    content: {
+      title: 'Club Fest Kickoff',
+      subtitle: '',
+      description: '',
+      startTime: '',
+      endTime: '',
+      date: null,
+      location: '',
+    },
+    image: {
+      backgroundImage: null,
+      speakersOn: true,
+      speakers: Array.from({ length: 4 }, emptySpeaker),
+      images: [],
+    },
+    placements: {},
+  }
+}
+
 export function DesignProvider({ children }) {
-  const [pageSize, setPageSize] = useState('Instagram Square (1x1)')
-  const [customWidth, setCustomWidth] = useState(540)
-  const [customHeight, setCustomHeight] = useState(540)
-  const [gap, setGap] = useState(12)
-  const [margin, setMargin] = useState(6)
-  const [canvasColor, setCanvasColor] = useState('#ffffff')
-  const [canvasPattern, setCanvasPattern] = useState('No Background Pattern')
+  // Only used to seed the very first render of every useState below (React
+  // ignores a useState initializer after the first call) — recomputed every
+  // render, which is wasteful but harmless (a small throwaway object) and
+  // far simpler than memoizing something that's only ever read once anyway.
+  const initialDoc = defaultDocument()
+  const [pageSize, setPageSize] = useState(initialDoc.pageSize)
+  const [customWidth, setCustomWidth] = useState(initialDoc.customWidth)
+  const [customHeight, setCustomHeight] = useState(initialDoc.customHeight)
+  const [gap, setGap] = useState(initialDoc.gap)
+  const [margin, setMargin] = useState(initialDoc.margin)
+  const [canvasColor, setCanvasColor] = useState(initialDoc.canvasColor)
+  const [canvasPattern, setCanvasPattern] = useState(initialDoc.canvasPattern)
   // 'Swiss' biases shuffle's typography/color/pattern pools toward the
   // Müller-Brockmann discipline (one grotesque typeface, big scale jumps,
   // restrained white/near-black/one-accent palette, no decorative pattern) —
   // a soft bias, not a hard lock: manual per-element overrides still work.
-  const [styleMode, setStyleMode] = useState('Free')
+  const [styleMode, setStyleMode] = useState(initialDoc.styleMode)
   // Grid Type (Design > Grid): 'Uniform' is today's evenly-spaced grid;
   // 'Custom' is a real Swiss-style asymmetric grid — customGridLines holds
   // the actual divider lines (see customGrid.js), folded into baseGrid below.
   // Independent of styleMode — switching styleMode to Swiss doesn't force
   // this to Custom (a soft bias, same philosophy as styleMode itself); only
   // Shuffle enforces the Swiss-implies-Custom pairing (see shuffle() below).
-  const [gridType, setGridTypeState] = useState('Uniform')
-  const [customGridLines, setCustomGridLines] = useState([])
+  const [gridType, setGridTypeState] = useState(initialDoc.gridType)
+  const [customGridLines, setCustomGridLines] = useState(initialDoc.customGridLines)
   // Dots/Grid Lines: spacing (px) between elements, and their own color —
   // bigger value, bigger/sparser pattern.
-  const [patternSize, setPatternSize] = useState(18)
-  const [dotColor, setDotColor] = useState('#000000')
-  const [gridColor, setGridColor] = useState('#000000')
+  const [patternSize, setPatternSize] = useState(initialDoc.patternSize)
+  const [dotColor, setDotColor] = useState(initialDoc.dotColor)
+  const [gridColor, setGridColor] = useState(initialDoc.gridColor)
   // Gradient Overlay: a two-stop linear gradient (color + transparency per
   // end, plus an angle) — modeled on Figma's gradient controls rather than a
   // single flat scrim color.
-  const [gradientColor1, setGradientColor1] = useState('#000000')
-  const [gradientOpacity1, setGradientOpacity1] = useState(0)
-  const [gradientColor2, setGradientColor2] = useState('#000000')
-  const [gradientOpacity2, setGradientOpacity2] = useState(60)
-  const [gradientAngle, setGradientAngle] = useState(180)
-  const [fileType, setFileType] = useState('JPEG')
-  const [resMultiplier, setResMultiplier] = useState(1)
+  const [gradientColor1, setGradientColor1] = useState(initialDoc.gradientColor1)
+  const [gradientOpacity1, setGradientOpacity1] = useState(initialDoc.gradientOpacity1)
+  const [gradientColor2, setGradientColor2] = useState(initialDoc.gradientColor2)
+  const [gradientOpacity2, setGradientOpacity2] = useState(initialDoc.gradientOpacity2)
+  const [gradientAngle, setGradientAngle] = useState(initialDoc.gradientAngle)
+  const [fileType, setFileType] = useState(initialDoc.fileType)
+  const [resMultiplier, setResMultiplier] = useState(initialDoc.resMultiplier)
   // Custom colors (Branding > Colors in the Assets panel) starts empty — the
   // user builds it up via the "+ Add Color" button or by pulling swatches out
   // of a Palette in the Color Library. Everything downstream that used to
   // assume a fixed 3-slot palette (colorForRole, DuotoneFilter, ImageElement,
   // shuffleEngine) falls back to colorContrast.js's DEFAULT_COLORS when empty.
-  const [colors, setColors] = useState([])
+  const [colors, setColors] = useState(initialDoc.colors)
   // Any per-element color picker (SingleColorRow's Custom tab) calls this
   // when the user commits a freshly-picked color, so it graduates into a
   // Brand swatch instead of only ever living on that one element — "create
@@ -72,7 +127,7 @@ export function DesignProvider({ children }) {
   // here (not locally in ColorLibrary) so the edit also reaches shuffle
   // (e.g. a customized Swiss accent actually changes what Swiss-mode shuffle
   // draws from). Shape: { [paletteName]: { [categoryName]: { [entryKey]: hex } } }.
-  const [paletteOverrides, setPaletteOverrides] = useState({})
+  const [paletteOverrides, setPaletteOverrides] = useState(initialDoc.paletteOverrides)
   function setPaletteColor(paletteName, categoryName, key, value) {
     setPaletteOverrides((prev) => ({
       ...prev,
@@ -107,25 +162,12 @@ export function DesignProvider({ children }) {
   // Export folder's Download action to rasterize exactly what's on screen.
   const artboardRef = useRef(null)
 
-  const [content, setContent] = useState({
-    title: 'Club Fest Kickoff',
-    subtitle: '',
-    description: '',
-    startTime: '',
-    endTime: '',
-    date: null,
-    location: '',
-  })
+  const [content, setContent] = useState(initialDoc.content)
   function updateContent(patch) {
     setContent((c) => ({ ...c, ...patch }))
   }
 
-  const [image, setImage] = useState({
-    backgroundImage: null,
-    speakersOn: true,
-    speakers: Array.from({ length: 4 }, emptySpeaker),
-    images: [],
-  })
+  const [image, setImage] = useState(initialDoc.image)
   function updateImage(patch) {
     setImage((s) => ({ ...s, ...patch }))
   }
@@ -224,7 +266,7 @@ export function DesignProvider({ children }) {
   // fontSize, rotation, manual}). Lives here (not local to the Canvas
   // component) so the right panel's selected-element section can read/edit
   // the same entries a canvas drag would produce.
-  const [placements, setPlacements] = useState({})
+  const [placements, setPlacements] = useState(initialDoc.placements)
   function updatePlacement(key, patch) {
     setPlacements((prev) => {
       if (!prev[key]) return prev
@@ -489,6 +531,114 @@ export function DesignProvider({ children }) {
     setInspectorOpen(key != null)
   }
 
+  // Version control (the "tech@nyu" header's version dropdown/+/Save —
+  // VersionBar.jsx) — an actual saved-document history, distinct from
+  // Ctrl+Z's undo (small, granular, in-memory steps) and from Shuffle's own
+  // one-step undo. Each version holds a full, independent document
+  // snapshot; "Version 1" is always the original defaults, matching the
+  // convention the app's old (decorative-only) dialkit toolbar described
+  // but never actually implemented — that toolbar's own preset system can't
+  // hold this app's placements/content at all (it's built for bounded
+  // slider/color/text parameter panels, not a dynamic document), so this is
+  // a real, app-level replacement rather than wiring into dialkit further.
+  const [versions, setVersions] = useState(() => [{ id: 'v1', name: 'Version 1', snapshot: defaultDocument() }])
+  const [activeVersionId, setActiveVersionId] = useState('v1')
+
+  function snapshotDocument() {
+    return {
+      pageSize, customWidth, customHeight, gap, margin,
+      canvasColor, canvasPattern, styleMode,
+      gridType, customGridLines,
+      patternSize, dotColor, gridColor,
+      gradientColor1, gradientOpacity1, gradientColor2, gradientOpacity2, gradientAngle,
+      fileType, resMultiplier,
+      colors, paletteOverrides,
+      content, image, placements,
+    }
+  }
+
+  function loadDocument(doc) {
+    setPageSize(doc.pageSize)
+    setCustomWidth(doc.customWidth)
+    setCustomHeight(doc.customHeight)
+    setGap(doc.gap)
+    setMargin(doc.margin)
+    setCanvasColor(doc.canvasColor)
+    setCanvasPattern(doc.canvasPattern)
+    setStyleMode(doc.styleMode)
+    setGridTypeState(doc.gridType)
+    setCustomGridLines(doc.customGridLines)
+    setPatternSize(doc.patternSize)
+    setDotColor(doc.dotColor)
+    setGridColor(doc.gridColor)
+    setGradientColor1(doc.gradientColor1)
+    setGradientOpacity1(doc.gradientOpacity1)
+    setGradientColor2(doc.gradientColor2)
+    setGradientOpacity2(doc.gradientOpacity2)
+    setGradientAngle(doc.gradientAngle)
+    setFileType(doc.fileType)
+    setResMultiplier(doc.resMultiplier)
+    setColors(doc.colors)
+    setPaletteOverrides(doc.paletteOverrides)
+    setContent(doc.content)
+    setImage(doc.image)
+    setPlacements(doc.placements)
+    // Selection/undo/shuffle-undo all point at THIS document's state — none
+    // of them mean anything once it's been swapped out for a different one,
+    // so every "which element/step was I on" pointer gets cleared rather
+    // than left dangling at a key or snapshot that belongs to the version
+    // just left.
+    setSelectedKeyState(null)
+    setInspectorOpen(false)
+    historyStackRef.current = []
+    preShuffleSnapshotRef.current = null
+    setCanUndoShuffle(false)
+  }
+
+  // Persists the CURRENT document into whichever version is active — same
+  // checkpoint addVersion/switchVersion take automatically before moving
+  // away from it, exposed here as its own action (replacing the old
+  // dialkit toolbar's "Copy" button, which only ever exported values to the
+  // clipboard) so the user can save on demand without switching anything.
+  function saveVersion() {
+    const doc = snapshotDocument()
+    setVersions((prev) => prev.map((v) => (v.id === activeVersionId ? { ...v, snapshot: doc } : v)))
+  }
+
+  // "+" in the version dropdown: checkpoints the version you're leaving
+  // (so nothing already done is lost), then starts a genuinely NEW version
+  // from the blank default document — not a copy of the current one — and
+  // switches to it.
+  function addVersion() {
+    const doc = snapshotDocument()
+    const newId = `v${Date.now()}-${Math.random()}`
+    const newVersion = { id: newId, name: `Version ${versions.length + 1}`, snapshot: defaultDocument() }
+    setVersions((prev) => [...prev.map((v) => (v.id === activeVersionId ? { ...v, snapshot: doc } : v)), newVersion])
+    setActiveVersionId(newId)
+    loadDocument(newVersion.snapshot)
+  }
+
+  // Selecting a version from the dropdown: checkpoint the one being left,
+  // then load the target's last-saved snapshot.
+  function switchVersion(id) {
+    if (id === activeVersionId) return
+    const target = versions.find((v) => v.id === id)
+    if (!target) return
+    const doc = snapshotDocument()
+    setVersions((prev) => prev.map((v) => (v.id === activeVersionId ? { ...v, snapshot: doc } : v)))
+    setActiveVersionId(id)
+    loadDocument(target.snapshot)
+  }
+
+  function renameVersion(id, name) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    setVersions((prev) => {
+      if (prev.some((v) => v.id !== id && v.name === trimmed)) return prev
+      return prev.map((v) => (v.id === id ? { ...v, name: trimmed } : v))
+    })
+  }
+
   const value = {
     pageSize, setPageSize,
     customWidth, setCustomWidth,
@@ -523,6 +673,7 @@ export function DesignProvider({ children }) {
     selectedKey, setSelectedKey,
     inspectorOpen, selectAndInspect,
     shuffle, undoShuffle, canUndoShuffle, dismissShuffleToast,
+    versions, activeVersionId, addVersion, switchVersion, saveVersion, renameVersion,
   }
 
   return <DesignContext.Provider value={value}>{children}</DesignContext.Provider>

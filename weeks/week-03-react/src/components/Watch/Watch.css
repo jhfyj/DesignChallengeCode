@@ -1,53 +1,134 @@
 .watch {
-  --case-size: min(78vmin, 360px);
+  /* The case is 60% of the stage's height, so the whole thing scales with
+     the viewport rather than sitting at a fixed pixel size. Clamped against
+     the viewport width too — the case is the widest part of the watch, and
+     on a short wide window 60% of the height would otherwise run past both
+     sides. --band-length below absorbs that clamp automatically. */
+  --case-size: min(calc(var(--stage-h, 100vh) * 0.6), 88vw);
+  /* Widest point, right where the strap leaves the case. */
+  --band-wide: calc(var(--case-size) * 0.62);
+  /* What it tapers down to and then holds. Keep the ratio between these two
+     in sync with LUG_INSET in Watch.jsx — the lug's path is what actually
+     draws the taper between them, and a mismatch shows up as a kink where
+     the curve hands off to the straight strap. */
+  --band-narrow: calc(var(--case-size) * 0.46);
+  /* How long the flare takes to resolve into the straight strap. */
+  --band-lug-height: calc(var(--case-size) * 0.26);
+  /* Whatever is left of the viewport once the case has taken its 60%, split
+     between the two straps — solved for rather than picked, so the two ends
+     land exactly on the top and bottom edges. The stack is
+     length + case + length - 2 x tuck (each strap gives back its tuck by
+     sliding under the case), and setting that equal to the stage height
+     gives the expression below. Because it's derived, the straps stay
+     correct when --case-size hits its width clamp. */
+  --band-length: calc((var(--stage-h, 100vh) - var(--case-size) + 2 * var(--band-tuck)) / 2);
+  /* How far each strap tucks behind the case — and the one value here that
+     is a hard geometric constraint rather than taste. The lug's case-end
+     edge is --band-wide across, so its corners sit 0.31 of the case out from
+     center; the case circle at that x has only dropped
+     sqrt(0.5^2 - 0.31^2) = 0.392. Tuck any less than 0.5 - 0.392 = 0.108 and
+     those corners land outside the circle, leaving a wedge of background
+     between the strap's edge and the case's curve — the strap stops reading
+     as attached. 0.13 clears that with a little margin. */
+  --band-tuck: calc(var(--case-size) * 0.13);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Straps are in normal flow rather than absolutely positioned, so this box
+     wraps the whole watch and its height is the sum of the parts — which is
+     what makes the two strap ends land on the viewport edges rather than
+     wherever centering happened to put them. Width is the case's, the widest
+     part of the watch. */
   width: var(--case-size);
-  height: var(--case-size);
+  height: var(--stage-h, 100vh);
 }
 
-/* --- straps, cropped at the edge of the stage like a lifestyle shot --- */
+/* --- straps --- */
 .watch__band {
-  position: absolute;
-  left: 50%;
-  width: calc(var(--case-size) * 0.62);
-  height: 46vh;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, #1c1e24, #303339 45%, #1c1e24);
-  border-left: 1px solid #3a3d44;
-  border-right: 1px solid #3a3d44;
+  width: var(--band-wide);
+  height: var(--band-length);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   z-index: 0;
+  /* On the wrapper rather than on either piece: drop-shadow follows the
+     rendered alpha shape, so one filter here traces the lug's curve and the
+     strap's straight edges as a single silhouette. Two shadows — a tight
+     contact one and a wide soft one — read as an object resting on the
+     surface instead of floating over it. Kept lighter than they'd be on a
+     dark stage; the same values that read as grounded on black read as
+     grime on white. */
+  filter: drop-shadow(0 1px 2px rgba(17, 20, 26, 0.3))
+    drop-shadow(0 10px 20px rgba(17, 20, 26, 0.16));
 }
 
-.watch__band::before {
-  content: '';
+/* Whichever of the two pieces comes second overlaps the first by a pixel.
+   Their fills match exactly at the junction (the gradient span is pinned to
+   the strap's width on both), but the lug is an SVG and the strap a div, so
+   they land on the pixel grid independently — the overlap is what keeps a
+   sub-pixel rounding difference from opening a hairline between them. The
+   drop-shadow on the wrapper works off the union of the two, so overlapping
+   costs nothing there. */
+.watch__band > * + * {
+  margin-top: -1px;
+}
+
+.watch__band-defs {
   position: absolute;
-  inset: 0;
-  background-repeat: repeat-y;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.04) 0,
-    rgba(255, 255, 255, 0.04) 2px,
-    transparent 2px,
-    transparent 14px
+  width: 0;
+  height: 0;
+}
+
+.watch__band-lug {
+  width: 100%;
+  height: var(--band-lug-height);
+  flex: none;
+  display: block;
+}
+
+/* Matte silicone: a shallow cross-strap falloff and nothing else — no
+   specular band, no bright edge lines. Must stay identical to BAND_STOPS in
+   Watch.jsx, which fills the curved lug this butts up against. */
+.watch__band-strap {
+  width: var(--band-narrow);
+  flex: 1;
+  background: linear-gradient(
+    90deg,
+    #15171b 0%,
+    #1f2128 10%,
+    #2b2e35 38%,
+    #2b2e35 62%,
+    #1f2128 90%,
+    #15171b 100%
   );
 }
 
 .watch__band--top {
-  bottom: calc(50% + var(--case-size) * 0.42);
-  border-radius: 18px 18px 0 0;
+  margin-bottom: calc(var(--band-tuck) * -1);
 }
 
-.watch__band--bottom {
-  top: calc(50% + var(--case-size) * 0.42);
-  border-radius: 0 0 18px 18px;
+.watch__band--top .watch__band-lug {
+  /* Same path either side of the case — the top strap's lug is the bottom
+     one upside down, since its case end is at the bottom of its own box. */
+  transform: scaleY(-1);
 }
+
+
+.watch__band--bottom {
+  margin-top: calc(var(--band-tuck) * -1);
+}
+
 
 /* --- case --- */
 .watch__case {
   position: relative;
   z-index: 1;
-  width: 100%;
-  height: 100%;
+  /* Explicit now that the case is a flex item next to the straps rather
+     than filling an absolutely-positioned .watch that was case-sized. */
+  width: var(--case-size);
+  height: var(--case-size);
+  flex: none;
   border-radius: 50%;
   background: conic-gradient(
     from 210deg,
@@ -58,9 +139,12 @@
     #26282d 85%,
     #2a2d33
   );
+  /* Softened for the white surface — the deep near-opaque shadows this
+     carried on the old black stage read as dirt once there's paper-white
+     around them. */
   box-shadow:
-    0 30px 60px -15px rgba(0, 0, 0, 0.7),
-    0 10px 24px rgba(0, 0, 0, 0.5),
+    0 24px 48px -14px rgba(17, 20, 26, 0.34),
+    0 8px 20px rgba(17, 20, 26, 0.2),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
@@ -101,4 +185,128 @@
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* --- cover glass ---
+   Everything below is light the glass adds on top of the UI, never anything
+   it takes away, so the whole layer blends in `screen`: white areas of the
+   gradients lighten what's under them and the transparent areas are exact
+   no-ops. Painted over every screen (z-index above RimMorph's 8) and
+   deliberately transparent to input — without pointer-events: none this
+   would sit between the user and the mic button, since it covers the full
+   dial. Sizes are in cqw against .watch__screen's own container so the
+   highlight scales with the watch instead of drifting as the case resizes. */
+.watch__glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 12;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  /* The one dial for how strong the whole reflection reads. Every layer
+     below is balanced against the others — the crescent brighter than the
+     bloom, the bloom brighter than the bounce — so turn this rather than
+     re-tuning the individual alphas, which drifts that balance. Because it
+     composites after the screen blend, it interpolates the lit result back
+     toward the bare UI: 1 is the full reflection, 0 is no glass at all. */
+  --glass-strength: 0.62;
+  opacity: var(--glass-strength);
+  background:
+    /* the room's light spilling over the top edge of the dome */
+    radial-gradient(
+      130% 90% at 46% -16%,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.12) 32%,
+      transparent 60%
+    ),
+    /* a dim bounce off the surface the watch is standing on */
+    radial-gradient(
+      80% 65% at 84% 106%,
+      rgba(255, 255, 255, 0.16) 0%,
+      transparent 46%
+    );
+}
+
+/* The specular streak — the bright soft-edged reflection of a window that
+   any curved cover glass carries. Rotated and blurred rather than drawn as
+   a hard shape: a reflection off a dome has no crisp boundary, and a sharp
+   one immediately reads as a decal sitting on the screen. */
+.watch__glass::before {
+  content: '';
+  position: absolute;
+  left: -18%;
+  top: -26%;
+  width: 92%;
+  height: 74%;
+  border-radius: 50%;
+  transform: rotate(-22deg);
+  /* Radial rather than a linear ramp: a linear one has a direction, and a
+     direction on a shape this size reads as a second bar rather than as the
+     bloom around the specular above. */
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.14) 46%,
+    transparent 78%
+  );
+  filter: blur(2cqw);
+}
+
+/* The hard specular — the layer that makes the dial read as covered in glass
+   rather than merely lit.
+
+   It's built as an arc, not a streak, and that's the whole trick: a domed
+   crystal reflects the room as a crescent that follows the rim, because the
+   surface curves away in every direction. Straight bands across the dial
+   read as stripes painted on top no matter how they're blurred or angled —
+   the shape is what was wrong, not the intensity.
+
+   So: `background` is a bright ring sitting just inside the rim, and the
+   mask keeps only the upper-left stretch of it — the side the rest of this
+   file lights from. What survives is a crescent hugging the edge, tapering
+   off at both ends. */
+.watch__glass-streak {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    transparent 0 60%,
+    rgba(255, 255, 255, 0.08) 72%,
+    rgba(255, 255, 255, 0.44) 85%,
+    rgba(255, 255, 255, 0.72) 92%,
+    rgba(255, 255, 255, 0.34) 97%,
+    transparent 100%
+  );
+  -webkit-mask: radial-gradient(
+    ellipse 76% 68% at 22% 15%,
+    #000 0%,
+    rgba(0, 0, 0, 0.88) 38%,
+    transparent 76%
+  );
+  mask: radial-gradient(ellipse 76% 68% at 22% 15%, #000 0%, rgba(0, 0, 0, 0.88) 38%, transparent 76%);
+  filter: blur(0.45cqw);
+}
+
+/* The bevel where the glass meets the bezel, catching the same light. Masked
+   to just the outermost sliver so it reads as the edge of a thick piece of
+   glass rather than a ring drawn on the dial; the conic sweep keeps it
+   brightest on the upper left, consistent with the streak above. */
+.watch__glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* conic angles run clockwise from 12 o'clock, so the bright part of this
+     sweep lands at ~315deg — the upper left, where every other layer here
+     puts the light. */
+  background: conic-gradient(
+    from 288deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.85) 27deg,
+    rgba(255, 255, 255, 0.28) 58deg,
+    transparent 92deg
+  );
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 92%, #000 95.5%);
+  mask: radial-gradient(circle closest-side, transparent 0 92%, #000 95.5%);
 }

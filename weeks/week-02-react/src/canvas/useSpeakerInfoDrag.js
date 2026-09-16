@@ -1,4 +1,4 @@
-import { withDragListeners } from './dragListeners.js'
+import { withDragListeners, unrotateDelta } from './dragListeners.js'
 
 function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n))
@@ -32,7 +32,7 @@ export function useSpeakerInfoDrag({ grid, scale, updateSpeaker }) {
   const stepX = grid.cellWidth + grid.gapPx
   const stepY = grid.cellHeight + grid.gapPx
 
-  function startResize(e, index, geometry, handle = 'se') {
+  function startResize(e, index, geometry, handle = 'se', rotation = 0) {
     e.stopPropagation()
     e.preventDefault()
     const cfg = HANDLE_CONFIG[handle]
@@ -41,8 +41,12 @@ export function useSpeakerInfoDrag({ grid, scale, updateSpeaker }) {
     const { row: startRow, col: startCol, colSpan: startColSpan, rowSpan: startRowSpan } = geometry
 
     withDragListeners((ev) => {
-      const dx = (ev.clientX - startX) / scale
-      const dy = (ev.clientY - startY) / scale
+      const rawDx = (ev.clientX - startX) / scale
+      const rawDy = (ev.clientY - startY) / scale
+      // Same local-axis correction as useElementDrag.js's startResize — see
+      // dragListeners.js's unrotateDelta for why this is needed once the
+      // info block itself is rotated.
+      const { dx, dy } = unrotateDelta(rawDx, rawDy, rotation)
       const deltaCol = Math.round(dx / stepX) * (cfg.fromLeft ? -1 : 1)
       const deltaRow = Math.round(dy / stepY) * (cfg.fromTop ? -1 : 1)
 

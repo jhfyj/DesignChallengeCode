@@ -1,5 +1,5 @@
 import { sumTrackRange } from './gridMath.js'
-import { withDragListeners } from './dragListeners.js'
+import { withDragListeners, unrotateDelta } from './dragListeners.js'
 
 function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n))
@@ -75,10 +75,15 @@ export function useElementDrag({ grid, scale, updatePlacement, onSelect, pushHis
     // tracks' sizes, which matters once columns/rows are unequal (Custom grid).
     const startWidthPx = sumTrackRange(grid.colSizes, startCol, startColSpan, grid.gapPx)
     const startHeightPx = sumTrackRange(grid.rowSizes, startRow, startRowSpan, grid.gapPx)
+    const rotation = placement.rotation || 0
 
     withDragListeners((ev) => {
-      const dx = (ev.clientX - startX) / scale
-      const dy = (ev.clientY - startY) / scale
+      const rawDx = (ev.clientX - startX) / scale
+      const rawDy = (ev.clientY - startY) / scale
+      // n/s/e/w are the element's OWN edges — once it's rotated, dragging
+      // along a screen axis no longer means dragging along that edge's
+      // axis, so the raw screen delta gets un-rotated into local space first.
+      const { dx, dy } = unrotateDelta(rawDx, rawDy, rotation)
       const deltaCol = Math.round(dx / stepX) * (cfg.fromLeft ? -1 : 1)
       const deltaRow = Math.round(dy / stepY) * (cfg.fromTop ? -1 : 1)
 

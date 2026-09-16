@@ -79,6 +79,23 @@
   --color-canvas-default-bg: var(--white);
   --color-canvas-placeholder: var(--gray-250);
 
+  /* ---- Motion: shared timing/easing so every transition in the app reads
+     as one system, instead of each component picking its own ad hoc number
+     (see LottieFiles' motion-design-skill — this app's UI reads as
+     "Corporate/Premium": responsive, no bounce/overshoot). Durations follow
+     the skill's element-type lookup table; easings are Material Design 3's
+     standard/decelerate/accelerate curves (entrance = decelerate, exit =
+     accelerate, on-screen movement = standard). Mirrored as plain JS numbers
+     in src/motionTokens.js for the `motion` library's transition props,
+     which can't read a CSS custom property directly — keep both in sync by
+     hand if these ever change. ---- */
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1); /* on-screen movement: sliding pill, hover color */
+  --motion-ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1); /* entrances — fast start, gentle landing */
+  --motion-ease-exit: cubic-bezier(0.3, 0, 1, 1); /* exits — gentle start, fast departure */
+  --motion-duration-fast: 150ms; /* button/toggle state, chevrons */
+  --motion-duration-base: 180ms; /* sliding pill indicator, exits */
+  --motion-duration-moderate: 250ms; /* toast/card entrances */
+
   /* ---- Semantic: elevation & overlays ---- */
   --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-elevated-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
