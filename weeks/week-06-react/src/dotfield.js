@@ -109,7 +109,7 @@ export function daylight(hour, sunrise = 7, sunset = 19) {
 
 // --- drawing ------------------------------------------------------------------
 
-// What a place's photo needs to read right, with Chengdu's values as defaults.
+// What a place's photo needs to read right, and the defaults.
 //   horizon  the lowest the sky can reach, as a fraction of the tile's height
 //   glow     [lo, hi] on the light score: below lo a dot is dark, above hi it
 //            is fully a light. The score weights brightness by colourfulness,

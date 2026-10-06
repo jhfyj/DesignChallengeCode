@@ -6,7 +6,7 @@ import { MASK, MASK_H, MASK_W } from './worldmask.js'
 // one more card. Clicking a green dot takes you to its card.
 //
 // The grid is as coarse as it can be while still giving every place a dot of
-// its own. When the places are close together (Chengdu and Chongqing are a
+// its own. When the places are close together (two cities a
 // couple of degrees apart) that takes more dots than the box can show at
 // card size, and the map becomes a canvas you drag around instead.
 

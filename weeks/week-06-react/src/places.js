@@ -1,4 +1,4 @@
-import chengdu from './places/chengdu.jpg'
+import madrid from './places/madrid.jpg'
 import amsterdam from './places/amsterdam.jpg'
 import ginza from './places/ginza.jpg'
 import chongqing from './places/chongqing.jpg'
@@ -24,24 +24,31 @@ import losangeles from './places/losangeles.jpg'
 //            default is listed at LOOK in dotfield.js.
 export const PLACES = [
   {
-    id: 'chengdu',
-    name: 'Chengdu, China',
-    timeZone: 'Asia/Shanghai',
-    lat: 30.57,
-    lng: 104.07,
-    image: chengdu,
-    crop: [0.25, 0.85],
-    cropX: [0.18, 0.83],
-    sunrise: 7.1,
-    sunset: 18.9,
-    // The twin towers lit amber with calligraphy, in a misty night sky that
-    // glows faintly; fairy-lit trees on the right, a red light at their feet.
+    id: 'madrid',
+    name: 'Madrid, Spain',
+    timeZone: 'Europe/Madrid',
+    lat: 40.42,
+    lng: -3.7,
+    image: madrid,
+    crop: [0.05, 0.75],
+    cropX: [0.12, 0.88],
+    sunrise: 7.9,
+    sunset: 20.2,
+    // A street in the centre on a clear evening, the facades in late sun, so
+    // an invented night: some of the windows light up, and the iron lanterns
+    // on the walls come on. The painted facades are colourful enough to pass
+    // for string lights, so those are off.
     look: {
-      horizon: 0.88,
-      haze: true,
-      skyLift: 0.3,
-      ground: [0.3, 0.3, 0.32],
-      gain: 0.6,
+      horizon: 0.6,
+      daylit: true,
+      skyLift: 0.35,
+      windows: 0.22,
+      strings: 1,
+      lamps: [
+        [0.145, 0.69],
+        [0.5, 0.72],
+        [0.95, 0.66],
+      ],
     },
   },
   {
@@ -103,7 +110,7 @@ export const PLACES = [
     sunset: 18.9,
     // A skyline across the river, cut to the densest towers. The unlit towers
     // are as black as the sky, so by day they go with it and the made-up
-    // skyline stands in; the river below ripples like Chengdu's street.
+    // skyline stands in; the river below ripples like a wet street.
     look: {
       horizon: 0.75,
       towers: true,
