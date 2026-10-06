@@ -1,16 +1,5 @@
-# React + Vite
+# Week 03 · Round Watch Assistant
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A voice assistant designed for a round watch face. Hold the mic and the rim turns into a live waveform from your microphone. When you let go, a ring works through each step and lands on a card suggesting a nearby restaurant, which you can accept or decline.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+**[Live demo](https://jhfyj.github.io/DesignChallengeCode/week-03-react/)** · Run locally with `npm run dev -- --week=3` from the repo root.

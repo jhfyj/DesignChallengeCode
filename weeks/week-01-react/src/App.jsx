@@ -53,14 +53,14 @@ const ENTER_VOLUME = 0.35
 const HINT_DELAY = 4000
 
 const SOUND_URLS = {
-  tear: '/sfx-ticket-rip.mp3',
-  complete: '/sfx-tear-complete.mp3',
-  click: '/sfx-ui-click.mp3',
-  swoosh: '/sfx-swoosh.mp3',
-  hover: '/sfx-hover.mp3',
-  popupTop: '/sfx-ui-popup-top.mp3',
-  popupBottom: '/sfx-ui-popup-bottom.mp3',
-  enter: '/sfx-ticket-enter.mp3',
+  tear: import.meta.env.BASE_URL + 'sfx-ticket-rip.mp3',
+  complete: import.meta.env.BASE_URL + 'sfx-tear-complete.mp3',
+  click: import.meta.env.BASE_URL + 'sfx-ui-click.mp3',
+  swoosh: import.meta.env.BASE_URL + 'sfx-swoosh.mp3',
+  hover: import.meta.env.BASE_URL + 'sfx-hover.mp3',
+  popupTop: import.meta.env.BASE_URL + 'sfx-ui-popup-top.mp3',
+  popupBottom: import.meta.env.BASE_URL + 'sfx-ui-popup-bottom.mp3',
+  enter: import.meta.env.BASE_URL + 'sfx-ticket-enter.mp3',
 }
 
 function clamp(value, min, max) {

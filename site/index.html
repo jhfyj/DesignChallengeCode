@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Design Challenge · Jennifer Huang</title>
+    <meta name="description" content="One small interactive piece a week, designed and built in code by Jennifer Huang." />
+    <style>
+      :root {
+        --bg: #f6f3ec;
+        --ink: #1d1c1a;
+        --muted: #78736a;
+        --line: #dcd6ca;
+        --card: #fffdf8;
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-weight: 300;
+        line-height: 1.5;
+      }
+      a { color: inherit; }
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 72px 24px 96px; }
+      header { margin-bottom: 64px; max-width: 620px; }
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 16px;
+      }
+      h1 {
+        font-weight: 300;
+        font-size: clamp(36px, 6vw, 64px);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0 0 20px;
+      }
+      header p { margin: 0; font-size: 18px; color: var(--muted); }
+      header p a { color: var(--ink); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 40px 32px;
+      }
+      .card { display: flex; flex-direction: column; }
+      .thumb {
+        display: block;
+        aspect-ratio: 16 / 10;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--card);
+        border: 1px solid var(--line);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+      .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .thumb:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(40, 32, 20, 0.12); }
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin: 18px 0 6px;
+      }
+      .num { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+      h2 { font-weight: 400; font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+      .card p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+      .links { display: flex; gap: 18px; font-size: 14px; margin-top: auto; }
+      .links a { text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+      .links a:hover { border-color: var(--ink); }
+      footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+      @media (max-width: 480px) {
+        .wrap { padding: 48px 16px 64px; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">Jennifer Huang</p>
+        <h1>Weekly Design Challenge</h1>
+        <p>One small interactive piece a week, designed and built in code. Click any project to play with it in your browser, or browse the source on <a href="https://github.com/jhfyj/DesignChallengeCode">GitHub</a>.</p>
+      </header>
+
+      <main class="grid" id="projects"></main>
+
+      <footer>Built with React and Vite. Best viewed on a laptop or desktop.</footer>
+    </div>
+
+    <script>
+      // Add a new week here: folder = the name under weeks/, media = a file in docs/media/.
+      const PROJECTS = [
+        {
+          num: 'Week 01',
+          title: 'Night Market Ticket',
+          folder: 'week-01-react',
+          media: 'week-01-react.gif',
+          text: 'A ticket you tear along the perforation, with sound that follows how fast you drag.',
+        },
+        {
+          num: 'Week 02',
+          title: 'Event Poster Kit',
+          folder: 'week-02-react',
+          media: 'week-02-react.gif',
+          text: 'A grid-based poster generator for tech@nyu events. Shuffle for a new layout, lock what you like, export.',
+        },
+        {
+          num: 'Week 03',
+          title: 'Round Watch Assistant',
+          folder: 'week-03-react',
+          media: 'week-03-react.jpg',
+          text: 'A voice assistant for a round watch face. Hold the mic, watch the rim listen, think and answer.',
+        },
+        {
+          num: 'Week 04',
+          title: 'Since When Was the Last Time You Had Some Fun?',
+          folder: 'week-04-react',
+          media: 'week-04-react.gif',
+          text: 'A desktop that lifts away onto a playmat of colourful foam tiles.',
+        },
+        {
+          num: 'Week 05',
+          title: 'Graph Paper Corridor',
+          folder: 'week-05-react',
+          media: 'week-05-react.gif',
+          text: 'Scroll through a hole in graph paper into a 3D corridor drawn entirely in grid lines.',
+        },
+        {
+          num: 'Week 06',
+          title: 'World Clock',
+          folder: 'week-06-react',
+          media: 'week-06-react.gif',
+          text: 'Photos of cities redrawn as dots, lit by each place’s real local time.',
+        },
+        {
+          num: 'Side project',
+          title: 'Activity Log',
+          folder: 'random-week-06-react',
+          media: 'random-week-06-react.jpg',
+          text: 'An endless history of past tasks on a phone. Scrub the tick rail, rest on one to open it.',
+        },
+      ];
+
+      const REPO = 'https://github.com/jhfyj/DesignChallengeCode/tree/main/weeks/';
+      const grid = document.getElementById('projects');
+      for (const p of PROJECTS) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <a class="thumb" href="./${p.folder}/"><img loading="lazy" alt=""></a>
+          <div class="meta"><h2></h2><span class="num"></span></div>
+          <p></p>
+          <div class="links">
+            <a href="./${p.folder}/">Open demo →</a>
+            <a href="${REPO}${p.folder}">Code</a>
+          </div>`;
+        card.querySelector('img').src = `./media/${p.media}`;
+        card.querySelector('img').alt = p.title;
+        card.querySelector('h2').textContent = p.title;
+        card.querySelector('.num').textContent = p.num;
+        card.querySelector('p').textContent = p.text;
+        grid.appendChild(card);
+      }
+    </script>
+  </body>
+</html>
