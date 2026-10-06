@@ -35,15 +35,19 @@ export const PLACES = [
     sunrise: 7.9,
     sunset: 20.2,
     // A street in the centre on a clear evening, the facades in late sun, so
-    // an invented night: some of the windows light up, and the iron lanterns
-    // on the walls come on. The painted facades are colourful enough to pass
-    // for string lights, so those are off.
+    // an invented night: the buildings stay faintly lit by the street, their
+    // own windows light up, the shopfronts glow and the iron lanterns on the
+    // walls come on. The painted facades are colourful enough to pass for
+    // string lights, so those are off.
     look: {
       horizon: 0.6,
       daylit: true,
       skyLift: 0.35,
-      windows: 0.22,
+      panes: true,
+      windows: 0.8,
       strings: 1,
+      facade: 0.38,
+      shops: 0.84,
       lamps: [
         [0.145, 0.69],
         [0.5, 0.72],
@@ -62,16 +66,18 @@ export const PLACES = [
     cropX: [0.45, 0.785],
     sunrise: 7.8,
     sunset: 19.1,
-    // The Damrak canal houses in late sun, so an invented night: their
-    // windows light up, lamps run along the waterline, and it all ripples in
-    // the canal. Sunlit brick is warm and saturated enough to pass for
+    // The Damrak canal houses in late sun, so an invented night: the houses
+    // stay faintly lit and their own windows light up, lamps run along the
+    // waterline, and it all ripples in the canal. Sunlit brick is warm and saturated enough to pass for
     // bunting or floodlit stone, so both are switched off.
     look: {
       horizon: 0.78,
       daylit: true,
       skyLift: 0.35,
-      windows: 0.4,
+      panes: true,
+      windows: 0.8,
       strings: 1,
+      facade: 0.4,
       promenade: true,
       reflect: true,
       ripple: true,
@@ -156,15 +162,19 @@ export const PLACES = [
     sunrise: 7.6,
     sunset: 19.1,
     // A sunny old-town street hung with bunting, so another invented night:
-    // the bunting becomes festival string lights, the tall facades get a few
-    // windows, the TV tower across the river gets its red light, and the two
-    // street lamps in the photo come on.
+    // the buildings stay faintly lit by the street and their own windows light
+    // up, the bunting becomes festival string lights, the shopfronts glow, the
+    // TV tower across the river gets its red light, and the two street lamps
+    // in the photo come on.
     look: {
       horizon: 0.6,
       daylit: true,
       skyLift: 0.35,
-      windows: 0.12,
+      panes: true,
+      windows: 0.8,
       strings: 0.14,
+      facade: 0.55,
+      shops: 0.85,
       beacon: [0.34, 0.46],
       lamps: [[0.26, 0.33], [0.92, 0.87]],
     },
@@ -182,8 +192,9 @@ export const PLACES = [
     sunset: 18.6,
     // Taken at sunset, so the photo is the dusk: the streaked orange sky is
     // sky (it would otherwise score as one huge light), and the towers are
-    // silhouettes with a few real lit windows, topped up with invented ones
-    // and an aviation light on the Hudson Yards crown.
+    // silhouettes with a few real lit windows. At night they stand out from
+    // a darker sky, their windows mostly lit as Midtown's are, their crowns
+    // floodlit, and an aviation light on the Hudson Yards spire.
     look: {
       horizon: 0.56,
       duskPhoto: true,
@@ -192,8 +203,11 @@ export const PLACES = [
       skyDrop: 0.35,
       skyStep: 0.13,
       glow: [0.12, 0.35],
-      windows: 0.14,
+      windows: 0.42,
       strings: 1,
+      mass: [0.2, 0.2, 0.23],
+      nightSky: [0.11, 0.12, 0.17],
+      crowns: true,
       ground: [0.32, 0.34, 0.38],
       gain: 0.6,
     },
@@ -210,8 +224,9 @@ export const PLACES = [
     sunrise: 6.9,
     sunset: 18.5,
     // The basin from the hills at night: a sky glowing with the city's haze
-    // (bright, but sky), a carpet of lights along the horizon with a
-    // boulevard running into it, and dark hills scattered with houses.
+    // (bright, but sky), a carpet of lights along the horizon -- every dot a
+    // light, sodium orange, white and the odd cool LED -- with a boulevard
+    // running into it, and dark hills scattered with houses.
     look: {
       horizon: 0.4,
       haze: true,
@@ -219,6 +234,8 @@ export const PLACES = [
       // Measured above each row's haze (see haze in dotfield.js), so the
       // carpet of lights stays a scatter instead of fusing into a white bar.
       glow: [0.04, 0.3],
+      // Except the band where the basin spreads out below: every dot a light.
+      carpet: [0.38, 0.62],
       ground: [0.33, 0.32, 0.27],
       gain: 0.5,
     },

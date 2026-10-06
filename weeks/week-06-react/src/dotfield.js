@@ -56,6 +56,9 @@ export function sampleImage(img, crop = [0, 1], cropX = [0, 1]) {
   const px = ctx.getImageData(0, 0, w, h).data
 
   const out = new Float32Array(COLS * ROWS * 3)
+  // Each dot's plain average brightness too: the colour leans to the dot's
+  // brightest pixel, which hides a dark window in a sunlit wall.
+  out.avg = new Float32Array(COLS * ROWS)
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       let ar = 0, ag = 0, ab = 0
@@ -74,6 +77,7 @@ export function sampleImage(img, crop = [0, 1], cropX = [0, 1]) {
       out[o] = 0.55 * (ar / n) + 0.45 * mr
       out[o + 1] = 0.55 * (ag / n) + 0.45 * mg
       out[o + 2] = 0.55 * (ab / n) + 0.45 * mb
+      out.avg[r * COLS + c] = luma(ar / n, ag / n, ab / n)
     }
   }
   return out
@@ -133,6 +137,10 @@ export function daylight(hour, sunrise = 7, sunset = 19) {
 //            sunny photo, and its bright sky and glass would all read as one.
 // and for an invented night only:
 //   windows  share of plain facade dots that are lit windows
+//   panes    find the windows in the photo instead -- the dots darker than
+//            the wall around them -- and light those, so the night keeps
+//            the facades' rows of windows. `windows` is then the share of
+//            them that are lit
 //   strings  how colourful a dot must be to become a string light
 //   flood    floodlight red stone rather than giving it windows
 //   promenade  a row of lamps along the horizon, for a waterfront
@@ -140,6 +148,19 @@ export function daylight(hour, sunrise = 7, sunset = 19) {
 //   beacon   [x, y] of the aviation light as tile fractions; left out, it
 //            goes on the highest point that isn't sky
 //   lamps    [[x, y], ...] street lamps, as tile fractions
+//   facade   how much of the buildings stays visible at night, lit warm by
+//            the street; 0 leaves only the lights, on the idle grid
+//   mass     [r, g, b] the buildings are at night instead, for a skyline
+//            that is silhouettes in the photo and so has no colour to keep
+//   nightSky [r, g, b] the sky at night, darker than the buildings so their
+//            outline holds; left out, the sky is the idle grid
+//   carpet   [top, bottom] a band, as fractions of the tile's height, that is
+//            a city seen from above at night: so many lights that every dot
+//            in it is one, each its own brightness, rather than a few
+//            picked out of a haze that is all light
+//   crowns   light the tops of the towers that stand above the skyline
+//   shops    from this fraction of the tile's height down, the colourful and
+//            bright dots are shopfronts and stay lit; null for none
 const LOOK = {
   horizon: 0.6,
   glow: [0.07, 0.35],
@@ -155,12 +176,19 @@ const LOOK = {
   gain: 0.45,
   daylit: false,
   windows: 0.45,
+  panes: false,
   strings: 0.3,
   flood: false,
   promenade: false,
   reflect: false,
   beacon: null,
   lamps: [],
+  facade: 0,
+  mass: null,
+  nightSky: null,
+  crowns: false,
+  carpet: null,
+  shops: null,
 }
 
 // Light colours for an invented night.
@@ -169,6 +197,9 @@ const COOL = [0.8, 0.88, 1]
 const FLOOD = [1, 0.64, 0.4]
 const LAMP = [1, 0.7, 0.36]
 const BEACON = [1, 0.16, 0.1]
+const CROWN = [1, 0.92, 0.8]
+const SODIUM = [1, 0.6, 0.28]
+const WHITE = [1, 0.96, 0.88]
 
 // Blink behaviour per dot of an invented night.
 const STEADY = 0
@@ -260,6 +291,24 @@ function inventNight(colors, sky, look) {
 
   // Without water to reflect in, the whole photo is land and gets lights.
   const landRows = look.reflect ? hRow : ROWS
+
+  // For panes: how much darker each dot is than the wall around it, a few
+  // dots either side and one above and below.
+  const L = new Float32Array(n)
+  for (let i = 0; i < n; i++) L[i] = colors.avg?.[i] ?? luma(colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2])
+  const recess = (r, c) => {
+    let s = 0
+    let k = 0
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        const rr = r + dr, cc = c + dc
+        if ((!dr && !dc) || rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS || sky[rr * COLS + cc]) continue
+        s += L[rr * COLS + cc]
+        k++
+      }
+    }
+    return k ? s / k - L[r * COLS + c] : 0
+  }
   let peak = -1
   for (let r = 0; r < landRows; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -272,6 +321,11 @@ function inventNight(colors, sky, look) {
       const green = cg - Math.max(cr, cb)
       const red = cr - Math.max(cg, cb)
       const h = hash(i * 3.1 + 0.7)
+      if (look.shops !== null && r >= look.shops * ROWS && (chroma > 0.18 || L[i] > 0.55)) {
+        const lit = [tint(cr / hi), tint(cg / hi), tint(cb / hi)]
+        set(i, chroma > 0.18 ? lit : WARM, 0.6 + 0.3 * h)
+        continue
+      }
       // A pennant is smaller than a dot, so its colour arrives diluted by the
       // wall behind it; the bar is set low enough to still catch it.
       if (chroma > look.strings && chroma / hi > 0.4) {
@@ -281,6 +335,12 @@ function inventNight(colors, sky, look) {
         if (h < 0.06) set(i, LAMP, 0.6)
       } else if (look.flood && red > 0.06) {
         set(i, FLOOD, 0.45 + 0.2 * h)
+      } else if (look.panes) {
+        const d = recess(r, c)
+        if (d > 0.04 && h < look.windows) {
+          const a = 0.7 + 0.3 * smoothstep(0.04, 0.14, d)
+          set(i, hash(i * 5.3) < 0.7 ? WARM : COOL, (0.7 + 0.3 * hash(i * 8.9)) * a, WINDOW)
+        }
       } else if (h < look.windows && (!look.daylit || luma(cr, cg, cb) > 0.18)) {
         // Near-black in a sunny photo is a silhouette -- a tree against the
         // light, a lamppost -- not a wall with windows in it. (At sunset the
@@ -299,6 +359,26 @@ function inventNight(colors, sky, look) {
     Math.min(ROWS - 1, Math.round(y * (ROWS - 1))) * COLS +
     Math.min(COLS - 1, Math.round(x * (COLS - 1)))
   for (const at of look.lamps) set(cell(at), LAMP, 1)
+
+  // Tower crowns: where a column rises well above the skyline around it,
+  // its top floors are floodlit.
+  if (look.crowns) {
+    const top = new Int16Array(COLS).fill(ROWS)
+    for (let c = 0; c < COLS; c++) {
+      for (let r = 0; r < ROWS; r++) {
+        if (!sky[r * COLS + c]) {
+          top[c] = r
+          break
+        }
+      }
+    }
+    const line = [...top].sort((a, b) => a - b)[Math.floor(COLS / 2)]
+    for (let c = 0; c < COLS; c++) {
+      if (top[c] > line - 3) continue
+      set(top[c] * COLS + c, CROWN, 1)
+      if (top[c] + 1 < ROWS) set((top[c] + 1) * COLS + c, CROWN, 0.75)
+    }
+  }
   const beacon = look.beacon ? cell(look.beacon) : peak
   if (beacon >= 0) set(beacon, BEACON, 1, AVIATION)
 
@@ -550,7 +630,8 @@ export class DotField {
         // Sky is never a light, however bright the photo's clouds are.
         let amt = 0, nr = IDLE[0], ng = IDLE[1], nb = IDLE[2]
         if (!look.daylit) {
-          const score = lightScore(sr, sg, sb) - rowGlow[r] * 0.7
+          // The haze sits over the sky; down on the ground it hardly counts.
+          const score = lightScore(sr, sg, sb) - rowGlow[r] * (below ? 0.3 : 0.7)
           amt = sky[i] ? 0 : smoothstep(lo, hi, score * breath)
 
           // Night: the light alone, and the rest falls back to the idle grid.
@@ -561,10 +642,43 @@ export class DotField {
           nr = mix(IDLE[0], tint(sr / m) * lift, amt)
           ng = mix(IDLE[1], tint(sg / m) * lift, amt)
           nb = mix(IDLE[2], tint(sb / m) * lift, amt)
+          // The carpet: every dot a light, of its own brightness, in the
+          // city's mix of sodium orange, white and the odd cool LED.
+          if (look.carpet && !sky[i] && v >= look.carpet[0] && v <= look.carpet[1]) {
+            const k = hash(i * 6.7 + 2.3)
+            const on = k < 0.12 ? 0 : (0.35 + 0.65 * k) * smoothstep(0.08, 0.42, luma(sr, sg, sb))
+            const a = Math.min(1, on * breath)
+            if (a > amt) {
+              amt = a
+              const q = hash(i * 2.9 + 5.1)
+              const hue = q < 0.45 ? SODIUM : q < 0.82 ? WHITE : COOL
+              nr = mix(IDLE[0], mix(hue[0], tint(sr / m), 0.4), amt)
+              ng = mix(IDLE[1], mix(hue[1], tint(sg / m), 0.4), amt)
+              nb = mix(IDLE[2], mix(hue[2], tint(sb / m), 0.4), amt)
+            }
+          }
           // A hazy sky isn't a light, but it does glow: keep a faint band.
           if (look.haze && sky[i]) {
             nr = mix(IDLE[0], sr, 0.3); ng = mix(IDLE[1], sg, 0.3); nb = mix(IDLE[2], sb, 0.3)
           }
+        }
+        // The buildings in the street's own light, faint and warm, so the
+        // night keeps their shape; the lights go on over it. Water stays dark
+        // for the reflections.
+        const facade = (look.facade || look.mass) && !sky[i] && !(look.reflect && below)
+        let br = IDLE[0], bg = IDLE[1], bb = IDLE[2]
+        if (facade && look.mass) {
+          br = look.mass[0]; bg = look.mass[1]; bb = look.mass[2]
+        } else if (facade) {
+          const k = look.facade
+          br = Math.max(IDLE[0], sr * k * 1.15)
+          bg = Math.max(IDLE[1], sg * k * 0.95)
+          bb = Math.max(IDLE[2], sb * k * 0.75)
+        } else if (look.nightSky && sky[i]) {
+          br = look.nightSky[0]; bg = look.nightSky[1]; bb = look.nightSky[2]
+        }
+        if (facade || (look.nightSky && sky[i])) {
+          nr = mix(br, nr, amt); ng = mix(bg, ng, amt); nb = mix(bb, nb, amt)
         }
         if (lights) {
           // An invented night: the light was decided up front, and only its
@@ -579,9 +693,9 @@ export class DotField {
           if (a > amt) {
             amt = a
             const lift = Math.min(1, breath)
-            nr = mix(IDLE[0], lights.rgb[i * 3] * lift, amt)
-            ng = mix(IDLE[1], lights.rgb[i * 3 + 1] * lift, amt)
-            nb = mix(IDLE[2], lights.rgb[i * 3 + 2] * lift, amt)
+            nr = mix(br, lights.rgb[i * 3] * lift, amt)
+            ng = mix(bg, lights.rgb[i * 3 + 1] * lift, amt)
+            nb = mix(bb, lights.rgb[i * 3 + 2] * lift, amt)
           }
         }
 
@@ -667,7 +781,7 @@ export class DotField {
 
         // Dark dots shrink at night so the lit ones read as points of light;
         // by day every dot is full and the board reads as a picture.
-        const rad = pitch * mix(0.22 + 0.17 * amt, 0.4, day)
+        const rad = pitch * mix((facade ? 0.3 : 0.22) + 0.17 * amt, 0.4, day)
         const x = ox + c * pitch, y = oy + r * pitch
         ctx.fillStyle = css3(R, G, B)
         ctx.beginPath()
