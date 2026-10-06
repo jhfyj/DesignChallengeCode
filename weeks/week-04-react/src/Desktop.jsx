@@ -196,7 +196,7 @@ function MacIcon({ name, size }) {
   return (
     <img
       className="mac-asset"
-      src={`/mac/${name}.png`}
+      src={`${import.meta.env.BASE_URL}mac/${name}.png`}
       alt=""
       width={size}
       height={size}
