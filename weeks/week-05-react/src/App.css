@@ -1,0 +1,184 @@
+.app {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  background: #f6f3ec;
+  overflow: hidden;
+}
+
+.stage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.panel {
+  position: absolute;
+  left: 20px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 11px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(40, 38, 32, 0.62);
+  /* The lattice runs under everything, so the chrome has to be opaque or the
+     labels read against a grid. */
+  background: #f6f3ec;
+}
+
+.dial {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dial-name {
+  user-select: none;
+}
+
+.dial-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 2.6em;
+  color: rgba(40, 38, 32, 0.42);
+}
+
+.dial input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 108px;
+  height: 14px;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.dial input[type='range']::-webkit-slider-runnable-track {
+  height: 1px;
+  background: rgba(40, 38, 32, 0.34);
+}
+
+.dial input[type='range']::-moz-range-track {
+  height: 1px;
+  background: rgba(40, 38, 32, 0.34);
+}
+
+.dial input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #514c45;
+}
+
+.dial input[type='range']::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: #514c45;
+}
+
+.toggle {
+  position: relative;
+  font: inherit;
+  white-space: nowrap;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  padding: 4px 9px;
+  background: #f6f3ec;
+  border: 1px solid rgba(40, 38, 32, 0.28);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  border-color: rgba(40, 38, 32, 0.55);
+}
+
+.toggle.is-on {
+  color: #f6f3ec;
+  background: #514c45;
+  border-color: #514c45;
+}
+
+.hint {
+  color: rgba(40, 38, 32, 0.35);
+  user-select: none;
+}
+
+.clear {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(40, 38, 32, 0.62);
+  white-space: nowrap;
+  padding: 4px 9px;
+  background: #f6f3ec;
+  border: 1px solid rgba(40, 38, 32, 0.28);
+  cursor: pointer;
+}
+
+.clear:hover {
+  border-color: rgba(40, 38, 32, 0.55);
+}
+
+@media (max-width: 700px) {
+  .hint {
+    display: none;
+  }
+
+  .dial input[type='range'] {
+    width: 78px;
+  }
+}
+
+/* Hand-drawn mode reaches the chrome as well as the drawing: a written face,
+   and boxes whose corners are rounded unevenly on each side so they read as
+   drawn rather than set by a stylesheet. A second outline, offset and turned
+   a fraction, does the rest -- one pass over another is how a pen finds an
+   edge. */
+.is-sketch .panel,
+.is-sketch .clear {
+  font-family: 'Architects Daughter', 'Segoe Print', 'Bradley Hand', cursive;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+.is-sketch .toggle,
+.is-sketch .clear {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.is-sketch .toggle::after,
+.is-sketch .clear::after {
+  content: '';
+  position: absolute;
+  inset: -4px -3px -3px -4px;
+  border: 1px solid rgba(40, 38, 32, 0.22);
+  border-radius: 225px 15px 255px 15px / 15px 255px 15px 225px;
+  transform: rotate(-0.7deg);
+  pointer-events: none;
+}
+
+.is-sketch .panel {
+  border-radius: 225px 14px 255px 14px / 14px 255px 14px 225px;
+}
+
+.is-sketch .dial-value {
+  font-variant-numeric: normal;
+}

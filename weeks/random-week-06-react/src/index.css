@@ -1,0 +1,24 @@
+:root {
+  --inter: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: #0b0b0c;
+  color: #ececee;
+  font-family: var(--inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
