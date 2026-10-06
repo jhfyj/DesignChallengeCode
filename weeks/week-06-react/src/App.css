@@ -1,0 +1,1020 @@
+/* Two framed panels the height of the window. On the left, three boxes
+   that stay put -- the map, the time rim, a line about it all; on the right,
+   the cards, which scroll. */
+.app {
+  --left: clamp(260px, 460px, 50vw);
+  --pad: clamp(16px, 3.5vw, 48px);
+  --line: #2e2e2e;
+  --dial: clamp(120px, 24vh, 200px);
+  height: 100%;
+  padding: clamp(0px, 2vw, 24px);
+  display: grid;
+  grid-template-columns: var(--left) 1fr;
+}
+
+.left {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+}
+
+.box {
+  padding: 20px;
+}
+
+/* (~, not +: on a wide screen the dividers sit between the boxes.) */
+.box ~ .box {
+  border-top: 1px solid var(--line);
+}
+
+.right {
+  container-type: inline-size;
+  min-height: 0;
+  overflow-y: auto;
+  background: #181818;
+  padding: 48px var(--pad) 64px;
+  border: 1px solid var(--line);
+  border-left: 0;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+/* ---- the map ---- */
+
+.map {
+  display: flex;
+  justify-content: center;
+}
+
+.map-inner {
+  position: relative;
+}
+
+/* Too many dots for the box: drag the map around. Its edges fade to show
+   there's more of it. */
+.map-inner.is-pannable {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* The fade is on the dots alone, so a name label near the edge stays clear. */
+.is-pannable .map-dots {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent),
+    linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent),
+    linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
+  mask-composite: intersect;
+}
+
+.map-inner.is-pannable:active {
+  cursor: grabbing;
+}
+
+.map-inner.is-pannable .pin {
+  cursor: pointer;
+}
+
+.map-dots {
+  display: block;
+  overflow: visible;
+}
+
+.map-dots .land {
+  fill: #3c3c3c;
+}
+
+.map-dots .pin {
+  cursor: pointer;
+  outline: none;
+}
+
+.map-dots .pin-hit {
+  fill: transparent;
+}
+
+.map-dots .pin-dot {
+  fill: #b6f07a;
+  filter: drop-shadow(0 0 3px rgba(182, 240, 122, 0.7));
+  transition: r 0.2s ease;
+}
+
+/* The map's dot glows with its card, on the same rise and fall. */
+.map-dots .pin.is-flare .pin-dot {
+  animation: pin-flare 1.5s ease-in-out;
+}
+
+@keyframes pin-flare {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(182, 240, 122, 0.7)) drop-shadow(0 0 0 rgba(182, 240, 122, 0)) saturate(1);
+  }
+  30%,
+  40% {
+    filter: drop-shadow(0 0 6px rgba(200, 255, 140, 1)) drop-shadow(0 0 14px rgba(182, 240, 122, 0.85)) saturate(1.25);
+  }
+}
+
+.map-dots .pin:hover .pin-dot,
+.map-dots .pin:focus-visible .pin-dot {
+  filter: drop-shadow(0 0 5px rgba(182, 240, 122, 0.95));
+}
+
+.map-tip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -100%);
+  padding: 3px 7px;
+  border-radius: 0;
+  background: #2e2e2e;
+  color: #ececec;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-foot {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #ececec;
+}
+
+.map-foot .dim {
+  color: #8a8a8a;
+}
+
+/* ---- the time rim ---- */
+
+.dial-box {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial {
+  flex: none;
+  width: var(--dial);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+.dial-face {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  user-select: none;
+  outline: none;
+  border-radius: 50%;
+}
+
+.dial-face:focus-visible {
+  box-shadow: 0 0 0 1px #4a4a4a;
+}
+
+.dial-face .marker {
+  fill: #ececec;
+}
+
+.dial-face .rim {
+  fill: none;
+  stroke: #4a4a4a;
+  stroke-width: 1;
+}
+
+.dial-face .inner {
+  fill: none;
+  stroke: #6a6a6a;
+  stroke-width: 1;
+}
+
+.dial-face .tick {
+  stroke: #5a5a5a;
+  stroke-width: 1;
+}
+
+.dial-face .tick.is-minor {
+  stroke: #3a3a3a;
+}
+
+.dial-face .tick.is-major {
+  stroke: #9a9a9a;
+}
+
+/* The band you grab to turn the rim. */
+.dial-face .grip {
+  fill: none;
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: grab;
+  touch-action: none;
+}
+
+.dial-face .grip:active {
+  cursor: grabbing;
+}
+
+/* ---- the line at the bottom ---- */
+
+.about h1 {
+  display: block;
+  margin: 0 0 8px;
+}
+
+.about p {
+  margin: 0;
+  max-width: 24ch;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ececec;
+}
+
+.dial-caption {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.now {
+  margin-top: 6px;
+  padding: 2px 6px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  cursor: pointer;
+}
+
+.now:hover,
+.now:focus-visible {
+  color: #ececec;
+}
+
+.now.is-hidden {
+  visibility: hidden;
+}
+
+/* Only the docked rim on a phone has a middle to tap, and a bar on top. */
+.dial-centre,
+.topbar {
+  display: none;
+}
+
+/* As many across as fit -- four, then three, two, one as the panel narrows,
+   each step taken before the cards would drop below about 150px -- as many
+   rows as there are places, then the New card. */
+.wall {
+  --gap: clamp(24px, 3.5vw, 48px);
+  --cols: 4;
+  /* The panel's width (100cqw), less the gaps, shared between the columns. */
+  --tile: min(200px, calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--tile));
+  justify-content: center;
+  gap: calc(var(--gap) + 28px) var(--gap);
+}
+
+@container (max-width: 760px) {
+  .wall {
+    --cols: 3;
+  }
+}
+
+@container (max-width: 520px) {
+  .wall {
+    --cols: 2;
+  }
+}
+
+@container (max-width: 300px) {
+  .wall {
+    --cols: 1;
+  }
+}
+
+.tile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  outline: none;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 26 / 32;
+  overflow: hidden;
+}
+
+/* Out of flow, so only the frame's aspect ratio sizes it. In flow, the
+   canvas's own pixel size fed back into the frame's height on a resize,
+   and the tile stretched taller with every step. */
+.dots {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The photo itself, cut to the tile, faded in on hover or focus. */
+.photo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.photo img {
+  position: absolute;
+  display: block;
+  max-width: none;
+}
+
+.frame .photo {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.tile:hover .frame .photo,
+.tile:focus-visible .frame .photo {
+  opacity: 1;
+}
+
+.tile:focus-visible .frame {
+  box-shadow: 0 0 0 1px #4a4a4a;
+}
+
+.remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(30, 30, 30, 0.75);
+  color: #ececec;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tile:hover .remove,
+.tile:focus-within .remove {
+  opacity: 1;
+}
+
+/* Switching photos: each one's canvas fades in where the last one was. */
+.dots {
+  animation: fade-in 450ms ease-in-out;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(30, 30, 30, 0.75);
+  color: #ececec;
+  font: inherit;
+  font-size: 18px;
+  line-height: 24px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.nav.prev {
+  left: 6px;
+}
+
+.nav.next {
+  right: 6px;
+}
+
+.tile:hover .nav,
+.tile:focus-within .nav {
+  opacity: 1;
+}
+
+/* Which photo of how many, in the corner. */
+.count {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 0 6px;
+  height: 22px;
+  background: rgba(30, 30, 30, 0.75);
+  color: #ececec;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* A card with several photos can be swiped; vertical scrolling still works. */
+.has-many .frame {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.caption {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.place {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.time {
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: #ececec;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The New card: an empty tile, outlined. */
+.new {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.new-box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 26 / 32;
+  border: 1px dashed #3a3a3a;
+  color: #5a5a5a;
+  font-size: 28px;
+  font-weight: 200;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.new:hover .new-box,
+.new:focus-visible .new-box {
+  border-color: #6a6a6a;
+  color: #ececec;
+}
+
+.new:hover .place,
+.new:focus-visible .place {
+  color: #ececec;
+}
+
+/* ---- the New dialog ---- */
+
+.modal {
+  width: min(340px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid #2e2e2e;
+  border-radius: 0;
+  background: #242424;
+  color: #ececec;
+  overflow: visible;
+}
+
+.modal::backdrop {
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+/* In: the page blurs and dims while the card rises into place. Out: the
+   same, quicker, and falling away. */
+.modal[open] {
+  animation: modal-in 240ms ease-out;
+}
+
+.modal[open]::backdrop {
+  animation: fade-in 240ms ease-out;
+}
+
+.modal.is-closing {
+  animation: modal-out 190ms ease-in forwards;
+}
+
+.modal.is-closing::backdrop {
+  animation: fade-out 190ms ease-in forwards;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes modal-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: a fade, no travel. */
+@media (prefers-reduced-motion: reduce) {
+  .modal[open] {
+    animation-name: fade-in;
+  }
+
+  .modal.is-closing {
+    animation-name: fade-out;
+  }
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 24px 24px;
+}
+
+.drop {
+  position: relative;
+  margin-top: 16px;
+  width: 200px;
+  aspect-ratio: 26 / 32;
+  padding: 0;
+  border: 1px dashed #4a4a4a;
+  background: #1e1e1e;
+  color: #8a8a8a;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.drop:hover,
+.drop:focus-visible,
+.drop.is-over {
+  border-color: #8a8a8a;
+  color: #ececec;
+  outline: none;
+}
+
+.drop.has-photo {
+  border-style: solid;
+  border-color: transparent;
+}
+
+.drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.drop-hint .plus {
+  font-size: 28px;
+  font-weight: 200;
+  letter-spacing: 0;
+}
+
+.combo {
+  position: relative;
+  width: 100%;
+  margin-top: 18px;
+}
+
+.field {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #3a3a3a;
+  border-radius: 0;
+  background: #1e1e1e;
+  color: #ececec;
+  font: inherit;
+  font-size: 14px;
+}
+
+.field::placeholder {
+  color: #6a6a6a;
+}
+
+.field:focus {
+  outline: none;
+  border-color: #8a8a8a;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 1;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid #3a3a3a;
+  border-radius: 0;
+  background: #2a2a2a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.suggestions li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 8px;
+  border-radius: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestions li.is-active {
+  background: #383838;
+}
+
+.suggestions .country {
+  color: #8a8a8a;
+  white-space: nowrap;
+}
+
+.modal-note {
+  align-self: stretch;
+  margin: 8px 0 0;
+  min-height: 1.2em;
+  font-size: 11px;
+  color: #8a8a8a;
+}
+
+.save {
+  align-self: stretch;
+  margin-top: 10px;
+  padding: 9px;
+  border: 0;
+  border-radius: 0;
+  background: #ececec;
+  color: #1e1e1e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.save:disabled {
+  background: #3a3a3a;
+  color: #6a6a6a;
+  cursor: default;
+}
+
+/* Narrow: the dial becomes a band across the top that stays put, and the
+   places scroll under it, two across. */
+@media (max-width: 760px) {
+  /* On a phone the page simply scrolls: the map across the top, the rim and
+     the line under it, then the cards. */
+  .app {
+    --dial: 150px;
+    --dial-m: 310px; /* the docked rim */
+    --dial-rest: calc(var(--dial-m) / 2 + 28px); /* room under the cards for it */
+    --bar: 36px;
+    height: auto;
+    min-height: 100%;
+    padding: calc(var(--bar) + env(safe-area-inset-top)) 0 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .left {
+    border-width: 0 0 1px;
+  }
+
+  /* Where and when, in a slim bar that stays at the top. */
+  .topbar {
+    position: fixed;
+    z-index: 6;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--bar) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e1e1e;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar .time {
+    font-size: 13px;
+  }
+
+  .box {
+    padding: 16px;
+  }
+
+  /* Everything centred. */
+  .map-foot {
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .about {
+    text-align: center;
+  }
+
+  .about p {
+    margin: 0 auto;
+  }
+
+  /* The rim docks at the bottom of the screen, half of it showing, and
+     stays there while the page scrolls under it. The time sits inside the
+     visible half. */
+  .dial-box {
+    --dial: var(--dial-m);
+    position: fixed;
+    z-index: 5;
+    left: 50%;
+    bottom: calc(var(--dial) / -2 + env(safe-area-inset-bottom));
+    width: var(--dial);
+    height: var(--dial);
+    padding: 0;
+    border: 0 !important;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .dial-box .dial {
+    position: relative;
+  }
+
+  .dial-box .dial-face {
+    pointer-events: auto;
+  }
+
+  /* The rim's disc is the left panel's grey, so it reads as that panel
+     peeking up over the darker cards. */
+  .dial-box .dial-face .rim {
+    fill: #1e1e1e;
+  }
+
+  /* Where and when are in the bar along the top instead. */
+  .dial-box .dial-caption {
+    display: none;
+  }
+
+  /* The middle of the rim is the way back to now: dim while it's now
+     already. Its circle stops short of the band you turn. */
+  .dial-box .dial-centre {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--dial) * 128 / 220);
+    height: calc(var(--dial) * 128 / 220);
+    padding: calc(var(--dial) * 26 / 220) 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #ececec;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s ease;
+  }
+
+  .dial-box .dial-centre.is-live {
+    color: #5a5a5a;
+    cursor: default;
+  }
+
+  .right {
+    overflow: visible;
+    padding: 28px 16px calc(var(--dial-rest, 160px) + env(safe-area-inset-bottom));
+    border: 0;
+  }
+
+  .wall {
+    --gap: 16px;
+  }
+}
+
+/* Reduced motion: a short glow, no ramp. */
+@media (prefers-reduced-motion: reduce) {
+  .map-dots .pin.is-flare .pin-dot {
+    animation: pin-flare-still 0.5s step-end;
+  }
+
+  @keyframes pin-flare-still {
+    0% {
+      filter: drop-shadow(0 0 6px rgba(200, 255, 140, 1)) drop-shadow(0 0 12px rgba(182, 240, 122, 0.7));
+    }
+  }
+}
+
+/* ---- the dividers (two panels only) ---- */
+
+@media (min-width: 761px) {
+  .left {
+    position: relative;
+  }
+
+  /* The map gets the room the line under it leaves, and fills it. */
+  .map-box {
+    flex: none;
+    height: var(--map-h, 50%);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .map-box .map {
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* The rim is as big as its box allows, less the time under it. */
+  .dial-box {
+    flex: none;
+    height: var(--dial-h, 30%);
+    padding: 14px 20px;
+  }
+
+  /* The rim is a fixed size; a taller box just adds room round it. */
+  .dial-box .dial {
+    width: 220px;
+  }
+
+  .dial-box .dial-caption {
+    margin-top: 8px;
+    gap: 2px;
+  }
+
+  /* Back to now sits in the middle of the rim, as on a phone. */
+  .dial-box .dial {
+    position: relative;
+  }
+
+  .dial-box .dial-caption .now {
+    display: none;
+  }
+
+  .dial-box .dial-centre {
+    position: absolute;
+    left: 50%;
+    top: 110px; /* the rim's centre: half its fixed 220px */
+    width: 128px;
+    height: 128px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8a8a8a;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .dial-box .dial-centre:hover,
+  .dial-box .dial-centre:focus-visible {
+    color: #ececec;
+    outline: none;
+  }
+
+  .dial-box .dial-centre.is-live {
+    color: #4a4a4a;
+    cursor: default;
+  }
+
+  .about {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* An 8px strip over each line, to grab. */
+  .split {
+    position: relative;
+    z-index: 3;
+    flex: none;
+    height: 9px;
+    margin: -4px 0 -5px;
+    cursor: row-resize;
+    touch-action: none;
+    outline: none;
+  }
+
+  .split-col {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -5px;
+    width: 9px;
+    height: auto;
+    margin: 0;
+    cursor: col-resize;
+  }
+
+  /* The line itself, brighter while you're on it. */
+  .split::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 4px;
+    height: 1px;
+    background: transparent;
+    transition: background-color 0.15s ease;
+  }
+
+  .split-col::after {
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+
+  .split:hover::after,
+  .split.is-dragging::after {
+    background: #5c5c5c;
+  }
+
+  .split:focus-visible::after {
+    background: #8a8a8a;
+  }
+
+  /* While dragging, the cursor holds wherever the pointer goes. */
+  html.is-resizing,
+  html.is-resizing * {
+    user-select: none;
+  }
+
+  html.is-resizing.is-row * {
+    cursor: row-resize !important;
+  }
+
+  html.is-resizing.is-col * {
+    cursor: col-resize !important;
+  }
+}
