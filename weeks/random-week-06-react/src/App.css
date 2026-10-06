@@ -1,0 +1,527 @@
+/* Coordinates below are in the Figma frame's units (589 × 1278). */
+
+.stage {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.frame-slot {
+  position: relative;
+}
+
+/* ---------- Phone ---------- */
+
+/* Lavender titanium rim around a black bezel, drawn in frame units and
+   scaled with everything else. The screen sits BEZEL (26) in from each side. */
+.device {
+  position: absolute;
+  inset: 0 auto auto 0;
+  border-radius: 108px;
+  background: linear-gradient(135deg, #e3d9ef, #9d93b2 18%, #efe8f6 42%, #857b99 68%, #d4cae3);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.45),
+    inset 0 0 0 7px rgb(0 0 0 / 0.08),
+    0 30px 80px rgb(0 0 0 / 0.55);
+  transform-origin: 0 0;
+}
+
+/* The black glass edge between the rim and the screen. */
+.device::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 101px;
+  background: #050506;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.device__button {
+  position: absolute;
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8a809e, #e6ddf0 55%, #a197b6);
+}
+
+.device__button--action {
+  left: -4px;
+  top: 250px;
+  height: 46px;
+}
+
+.device__button--vol-up {
+  left: -4px;
+  top: 340px;
+  height: 92px;
+}
+
+.device__button--vol-down {
+  left: -4px;
+  top: 452px;
+  height: 92px;
+}
+
+.device__button--power {
+  right: -4px;
+  top: 380px;
+  height: 150px;
+}
+
+.device__island {
+  position: absolute;
+  left: 50%;
+  top: 17px;
+  width: 186px;
+  height: 54px;
+  border-radius: 27px;
+  background: #000;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.device__home {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 208px;
+  height: 7px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.5);
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.panel {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 82px;
+  isolation: isolate;
+  background: var(--surface);
+  color: var(--ink);
+  user-select: none;
+  --surface: #161618;
+  --ink: #ececee;
+  --ok: #44f041;
+  --warn: #f5c84b;
+  --alert: #ff5a4f;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------- Return to current ---------- */
+
+.return {
+  position: absolute;
+  right: 28px;
+  bottom: 32px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 18px 12px 20px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+  background: rgb(38 38 42 / 0.86);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  color: var(--ink);
+  font: 15px var(--inter);
+  cursor: pointer;
+  opacity: 0;
+  translate: 0 12px;
+  pointer-events: none;
+  transition:
+    opacity 220ms ease,
+    translate 320ms var(--ease),
+    background 160ms ease;
+}
+
+.return.is-shown {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* Out of the way while the timeline is open. */
+.is-open .return.is-shown {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.return:hover {
+  background: rgb(52 52 57 / 0.92);
+}
+
+.return:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 3px;
+}
+
+.return span {
+  opacity: 0.6;
+}
+
+/* ---------- Rail ---------- */
+
+/* The scrubber layer over the page. It only takes the pointer once the
+   timeline is out; before that, only the pill itself does. */
+.rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 340px;
+  pointer-events: none;
+}
+
+.is-open .rail,
+.rail .pill,
+.rail .details {
+  pointer-events: auto;
+}
+
+.rail__backdrop {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 589px;
+  background: linear-gradient(90deg, var(--surface) 0, var(--surface) 52%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.is-open .rail__backdrop {
+  opacity: 0.8;
+}
+
+/* ---------- Pill ---------- */
+
+.pill {
+  position: absolute;
+  left: 8px; /* centred in the page's 40px margin */
+  top: 579px; /* centred on the page */
+  width: 24px;
+  height: 120px;
+  border: 2px solid transparent;
+  border-radius: 139px;
+  /* A wheel rolling on a horizontal axis: lit across the middle, falling off
+     toward the ends, inside a thin brushed-metal rim. */
+  background:
+    linear-gradient(#5d5e61, #8a8b8e 28%, #9c9da0 50%, #8a8b8e 72%, #5d5e61) padding-box,
+    linear-gradient(160deg, #fff, #a9aaad 24%, #eeeef0 48%, #7e7f82 74%, #d6d7da) border-box;
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.35),
+    inset 0 -2px 3px rgb(0 0 0 / 0.25),
+    0 0 0 1px rgb(0 0 0 / 0.12),
+    0 3px 8px rgb(0 0 0 / 0.18);
+  opacity: 0.59;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+  transition:
+    left 520ms var(--ease),
+    top 520ms var(--ease),
+    width 520ms var(--ease),
+    height 520ms var(--ease),
+    opacity 300ms ease;
+}
+
+/* A soft lit patch under the pointer while the pill is pressed. */
+.pill__glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--touch-y, 50%);
+  height: 220px;
+  translate: 0 -50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.55),
+    rgb(255 255 255 / 0.2) 55%,
+    rgb(255 255 255 / 0)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.pill[data-touched] .pill__glow {
+  opacity: 1;
+  transition-duration: 90ms;
+}
+
+.pill:active {
+  cursor: grabbing;
+}
+
+.pill:focus-visible {
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.35),
+    inset 0 -2px 3px rgb(0 0 0 / 0.25),
+    0 0 0 3px var(--surface),
+    0 0 0 5px #44f041;
+}
+
+.is-open .pill {
+  left: 26px;
+  top: 367px;
+  width: 56px;
+  height: 543px;
+  opacity: 1;
+}
+
+.ticks {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: hidden;
+  translate: -50% -50%;
+  mask-image: linear-gradient(transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  transition: opacity 260ms ease;
+}
+
+/* The tick artwork is drawn horizontally; turn it upright, then slide it
+   within one repeat period so it scrolls without ever showing an end.
+   The exported SVG is used as a mask, so the marks keep their exact shapes
+   while being lit like grooves cut into the metal: shadowed along the top
+   wall, catching light on the bottom wall and on a thin lip just below. */
+.ticks__art,
+.ticks__lip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  mask: var(--art) no-repeat 0 0 / 100% 100%;
+}
+
+/* In the artwork's own (unrotated) axes, x runs down the pill and the marks
+   repeat every 16px, each 4px thick; y runs across the pill. */
+.ticks__art {
+  background:
+    repeating-linear-gradient(to right, #26272b 0, #26272b 1px, #3d3e43 2.5px, #6a6b70 4px, #6a6b70 16px),
+    linear-gradient(#4a4b50, #141518 30%, #141518 70%, #4a4b50);
+  background-blend-mode: screen;
+}
+
+.ticks__lip {
+  background: linear-gradient(rgb(255 255 255 / 0.15), rgb(255 255 255 / 0.5) 50%, rgb(255 255 255 / 0.15));
+}
+
+.ticks--collapsed {
+  width: 12px;
+  height: 92px;
+}
+
+.ticks--collapsed .ticks__art {
+  --art: url('/assets/ticks-collapsed.svg');
+  width: 368px;
+  height: 12px;
+  transform: translate(12px, var(--shift)) rotate(90deg);
+}
+
+.ticks--collapsed .ticks__lip {
+  display: none;
+}
+
+.ticks--open {
+  width: 32px;
+  height: 436px;
+  opacity: 0;
+}
+
+.ticks--open .ticks__lip {
+  --art: url('/assets/ticks.svg');
+  width: 468px;
+  height: 32px;
+  transform: translate(32px, var(--shift)) rotate(90deg) translateX(1.5px);
+}
+
+.ticks--open .ticks__art {
+  --art: url('/assets/ticks.svg');
+  width: 468px;
+  height: 32px;
+  transform: translate(32px, var(--shift)) rotate(90deg);
+}
+
+.is-open .ticks--collapsed {
+  opacity: 0;
+}
+
+.is-open .ticks--open {
+  opacity: 1;
+  transition-delay: 120ms;
+}
+
+/* ---------- Entries ---------- */
+
+.entries {
+  position: absolute;
+  left: 121px;
+  top: 580px;
+  width: 192px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  opacity: 0;
+  translate: -14px 0;
+  pointer-events: none;
+  transition:
+    opacity 260ms ease,
+    translate 520ms var(--ease);
+}
+
+.is-open .entries {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition-delay: 90ms;
+}
+
+.entry {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 192px;
+  cursor: pointer;
+}
+
+.entry__dot {
+  --status: var(--ok);
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 4px 0 color-mix(in srgb, var(--status) 80%, transparent),
+    0 0 12px 2px color-mix(in srgb, var(--status) 40%, transparent);
+}
+
+.entry__dot[data-status='warn'] {
+  --status: var(--warn);
+}
+
+.entry__dot[data-status='alert'] {
+  --status: var(--alert);
+}
+
+/* The exported dot is the shape; its colour comes from the entry's status. */
+.entry__dot-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--status);
+  mask: url('/assets/dot.svg') no-repeat center / 100% 100%;
+}
+
+/* The active entry's light breathes gently. */
+.entry.is-active .entry__dot {
+  animation: dot-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes dot-breathe {
+  50% {
+    box-shadow:
+      0 0 6px 1px color-mix(in srgb, var(--status) 90%, transparent),
+      0 0 18px 4px color-mix(in srgb, var(--status) 50%, transparent);
+  }
+}
+
+.entry p {
+  margin: 0;
+  line-height: normal;
+}
+
+.entry__title {
+  font-family: var(--inter);
+  font-size: 20px;
+}
+
+.entry__time {
+  font-family: var(--mono);
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* ---------- Details ---------- */
+
+.details__arrow {
+  position: absolute;
+  left: 312px;
+  top: 599px;
+  width: 10.4px;
+  height: 9.75px;
+  rotate: 90deg;
+  animation: arrow-in 280ms var(--ease) both;
+}
+
+.context {
+  position: absolute;
+  left: 352px;
+  top: 621px; /* centered on the active entry */
+  translate: 0 -50%;
+  width: 212px;
+}
+
+.context p {
+  margin: 0;
+}
+
+.context__summary {
+  font-family: var(--inter);
+  font-size: 18px;
+  line-height: 1.3;
+  animation: detail-in 360ms var(--ease) 40ms both;
+}
+
+.context__points {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.context__points li {
+  position: relative;
+  padding-left: 14px;
+  font-family: var(--inter);
+  font-size: 15px;
+  line-height: 1.35;
+  opacity: 0.6;
+  animation: detail-in 360ms var(--ease) both;
+}
+
+.context__points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@keyframes arrow-in {
+  from {
+    opacity: 0;
+    translate: -6px 0;
+  }
+}
+
+@keyframes detail-in {
+  from {
+    opacity: 0;
+    translate: -10px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel *,
+  .panel {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

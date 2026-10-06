@@ -1,0 +1,334 @@
+/* A task page. Lives under the rail, scrolls on its own. Frame units. */
+
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  transition:
+    opacity 300ms ease,
+    filter 300ms ease;
+}
+
+.page::-webkit-scrollbar {
+  display: none;
+}
+
+/* While the timeline is out, the page steps back so the rail reads clearly. */
+.is-open .page {
+  opacity: 0.16;
+  filter: blur(2px);
+}
+
+.page__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 110%; /* every task runs a little past one screen */
+  padding: 100px 40px 72px; /* clears the Dynamic Island; the closed pill sits inside the left margin */
+}
+
+/* ---------- Seams to neighbouring tasks ---------- */
+
+.seam {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 160ms ease;
+}
+
+.seam:hover,
+.seam:focus-visible {
+  opacity: 0.9;
+}
+
+.seam--older {
+  padding-bottom: 20px;
+  border-bottom: 1px dashed rgb(255 255 255 / 0.14);
+}
+
+.seam--newer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px dashed rgb(255 255 255 / 0.14);
+}
+
+.seam__title {
+  font-size: 16px;
+}
+
+.seam--older .seam__title::before {
+  content: '↑  ';
+}
+
+.seam--newer .seam__title::before {
+  content: '↓  ';
+}
+
+/* ---------- Header ---------- */
+
+.page__head {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+
+.page__dot {
+  --status: var(--ok);
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--status);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--status) 55%, transparent);
+  translate: 0 -3px;
+}
+
+.page__dot[data-status='warn'] {
+  --status: var(--warn);
+}
+
+.page__dot[data-status='alert'] {
+  --status: var(--alert);
+}
+
+.page__head h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.page__meta {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  opacity: 0.45;
+}
+
+/* ---------- Thread ---------- */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.msg p {
+  margin: 0;
+}
+
+.msg code,
+.tool code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.07);
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+.msg--user {
+  align-self: flex-end;
+  max-width: 82%;
+  margin: 10px 0 4px;
+  padding: 14px 18px;
+  border-radius: 18px 18px 6px 18px;
+  background: #26262a;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.msg--agent {
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgb(236 236 238 / 0.86);
+}
+
+.msg--agent ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.msg--agent li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.msg--agent li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.68em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* A summary that needs attention gets a coloured rule down its side. */
+.msg--agent.is-warn,
+.msg--agent.is-alert {
+  padding-left: 16px;
+  border-left: 2px solid var(--status);
+}
+
+.msg--agent.is-warn {
+  --status: var(--warn);
+}
+
+.msg--agent.is-alert {
+  --status: var(--alert);
+}
+
+/* ---------- Tool calls ---------- */
+
+.tool {
+  --status: rgb(236 236 238 / 0.5);
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  column-gap: 10px;
+  row-gap: 3px;
+  padding-left: 14px;
+  border-left: 1px solid rgb(255 255 255 / 0.1);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tool[data-status='ok'] {
+  --status: var(--ok);
+}
+
+.tool[data-status='warn'] {
+  --status: var(--warn);
+}
+
+.tool__name {
+  position: relative;
+  color: var(--status);
+}
+
+.tool__target {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool__result {
+  grid-column: 2;
+  opacity: 0.45;
+}
+
+/* ---------- Diffs and terminal output ---------- */
+
+.code {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 10px;
+  background: #1c1c1f;
+}
+
+.code figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  font-family: var(--mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.code figcaption > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code__stat {
+  display: flex;
+  gap: 8px;
+}
+
+.code__stat .is-add {
+  color: var(--ok);
+}
+
+.code__stat .is-del {
+  color: var(--alert);
+}
+
+.code pre {
+  margin: 0;
+  padding: 10px 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.65;
+  scrollbar-width: none;
+}
+
+.code--term pre {
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  color: rgb(236 236 238 / 0.72);
+}
+
+.code--term.is-warn {
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+}
+
+.code--term.is-alert {
+  border-color: color-mix(in srgb, var(--alert) 40%, transparent);
+}
+
+.line {
+  display: block;
+  padding: 0 14px 0 0;
+  white-space: pre;
+  color: rgb(236 236 238 / 0.62);
+}
+
+.line__sign {
+  display: inline-block;
+  width: 28px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.line.is-add {
+  background: rgb(68 240 65 / 0.07);
+  color: #b9f2b6;
+}
+
+.line.is-del {
+  background: rgb(255 90 79 / 0.08);
+  color: #f6b3ad;
+}
+
+/* ---------- Composer on the latest task ---------- */
+
+.composer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 16px;
+  font-size: 16px;
+  opacity: 0.5;
+}
