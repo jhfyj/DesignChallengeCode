@@ -57,7 +57,7 @@
   .links a span:last-child { display: flex; color: var(--t3); transition: transform .2s, color .2s; }
   .links a:hover span:last-child, .links a:focus-visible span:last-child { color: var(--accent); transform: translate(2px, -2px); }
 
-  .main { display: flex; flex-direction: column; gap: 28px; padding: 32px 36px 32px; min-width: 0; height: 100vh; }
+  .main { display: flex; flex-direction: column; justify-content: center; gap: 28px; padding: 32px 36px 32px; min-width: 0; height: 100vh; }
   .eyebrow { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--t3); margin: 0; }
   .feature { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 18px; flex: 1; min-height: 0; }
   .feature-stage { min-width: 0; min-height: 0; position: relative; }
@@ -228,7 +228,7 @@
   // On wide screens, move the details beside the demo when that makes the demo bigger.
   function fit() {
     const img = $('fImg'), m = $('fMedia'), info = $('fInfo'), f = document.querySelector('.feature');
-    f.classList.remove('beside'); f.style.gridTemplateColumns = '';
+    f.classList.remove('beside'); f.style.gridTemplateColumns = f.style.flex = f.style.height = '';
     m.style.width = m.style.height = info.style.maxWidth = '';
     if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) return;
     const r = img.naturalWidth / img.naturalHeight, FW = f.clientWidth, FH = f.clientHeight;
@@ -238,6 +238,8 @@
     if (side) { f.classList.add('beside'); f.style.gridTemplateColumns = w + 'px minmax(0, 1fr)'; }
     else info.style.maxWidth = w + 'px';
     m.style.width = w + 'px'; m.style.height = (w / r) + 'px';
+    // Shrink the block to the demo so leftover height becomes even margins, not a gap under the demo.
+    f.style.flex = 'none'; f.style.height = (side ? w / r : w / r + 18 + info.offsetHeight) + 'px';
   }
   $('fImg').addEventListener('load', fit);
   addEventListener('resize', fit);
