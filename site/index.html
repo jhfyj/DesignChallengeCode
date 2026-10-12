@@ -12,8 +12,8 @@
   /* Layout: wireframe split, brand panel left (logo top, bio + links bottom), featured demo top right, row of all works beneath. */
   :root {
     color-scheme: light;
-    --page: #FCFCFE;
-    --panel: #F7F7F7;
+    --page: #FFFFFF;
+    --panel: #F5F5F6;
     --line: #E4E4E8;
     --t1: #282828;
     --t2: #6b6b6b;
@@ -71,10 +71,10 @@
   }
   .feature-media:hover .open, .feature-media:focus-visible .open { opacity: 1; transform: none; }
   .feature-media:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
-  .feature-info { display: grid; grid-template-columns: minmax(180px, auto) minmax(0, 1fr) auto; align-items: baseline; gap: 6px 32px; min-width: 0; }
-  .feature-info .eyebrow { grid-column: 1 / -1; }
+  .feature-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .feature-info .actions { margin-bottom: 4px; }
   .feature-info h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
-  .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5; max-width: 60ch; }
+  .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5;  }
   .actions { display: flex; gap: 18px; font-size: 14px; white-space: nowrap; }
   .actions a { color: var(--t1); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
   .actions a.primary { color: var(--accent); border-color: currentColor; }
@@ -115,7 +115,6 @@
     .site { grid-template-columns: 1fr; height: auto; min-height: 0; }
     .side { position: static; height: auto; padding: 24px 20px; gap: 24px; border-right: 0; border-bottom: 1px solid var(--line); }
     .main { padding: 28px 20px; overflow: visible; }
-    .feature-info { grid-template-columns: 1fr; }
     .feature-stage { height: auto; }
     .feature-media { position: relative; width: 100% !important; height: auto !important; }
     .feature-media img { height: auto; }
@@ -161,8 +160,8 @@
         <div class="feature-info">
           <p class="eyebrow" id="fNum"></p>
           <h2 id="fTitle"></h2>
-          <p id="fText"></p>
           <div class="actions"><a class="primary" id="fOpen" href="#">Open demo</a><a id="fCode" href="#">Code</a></div>
+          <p id="fText"></p>
         </div>
       </section>
       <section class="works" id="works">
