@@ -57,7 +57,8 @@
   .links a span:last-child { display: flex; color: var(--t3); transition: transform .2s, color .2s; }
   .links a:hover span:last-child, .links a:focus-visible span:last-child { color: var(--accent); transform: translate(2px, -2px); }
 
-  .main { display: flex; flex-direction: column; gap: 28px; padding: 32px 36px 32px; min-width: 0; height: 100vh; }
+  /* Anchored to the bottom so the last work title lines up with the last link on the left (35px = panel padding + link padding); spare height goes above the demo. */
+  .main { display: flex; flex-direction: column; justify-content: flex-end; gap: 28px; padding: 32px 36px 35px; min-width: 0; height: 100vh; }
   .eyebrow { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--t3); margin: 0; }
   .feature { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 18px; flex: 1; min-height: 0; }
   .feature-stage { min-width: 0; min-height: 0; position: relative; }
@@ -75,6 +76,11 @@
   .feature-media:hover .open, .feature-media:focus-visible .open { opacity: 1; transform: none; }
   .feature-media:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
   .feature-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  /* Wide screens: the details sit beside the demo, so the demo can use the full height. */
+  .feature.beside { grid-template-rows: minmax(0, 1fr); column-gap: 40px; }
+  .feature.beside .feature-info { align-self: end; max-width: 340px; }
+  .feature.beside .feature-top { display: contents; }
+  .feature.beside .actions { order: 1; margin-top: 6px; }
   .feature-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
   .feature-info h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
   .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5;  }
@@ -91,6 +97,7 @@
   .head-right { display: flex; align-items: center; gap: 12px; }
 
   .nav { display: flex; }
+  .nav[hidden] { display: none; }
   /* Two separate buttons in the portfolio's control language: a soft frosted
      fill with a hairline edge, lifting to a white plate on hover. */
   .nav { gap: 6px; }
@@ -220,12 +227,21 @@
     row.appendChild(b);
   });
   // Size the featured box to the demo's own shape so nothing is cropped or letterboxed.
+  // On wide screens, move the details beside the demo when that makes the demo bigger.
   function fit() {
-    const img = $('fImg'), st = $('fStage'), m = $('fMedia'), info = $('fInfo');
-    if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) { m.style.width = m.style.height = info.style.maxWidth = ''; return; }
-    const r = img.naturalWidth / img.naturalHeight, W = st.clientWidth, H = st.clientHeight;
-    const w = Math.min(W, H * r);
-    m.style.width = info.style.maxWidth = w + 'px'; m.style.height = (w / r) + 'px';
+    const img = $('fImg'), m = $('fMedia'), info = $('fInfo'), f = document.querySelector('.feature');
+    f.classList.remove('beside'); f.style.gridTemplateColumns = f.style.flex = f.style.height = '';
+    m.style.width = m.style.height = info.style.maxWidth = '';
+    if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) return;
+    const r = img.naturalWidth / img.naturalHeight, FW = f.clientWidth, FH = f.clientHeight;
+    const below = Math.min(FW, (FH - 18 - info.offsetHeight) * r);
+    const beside = Math.min(FW - 260 - 40, FH * r);
+    const side = beside >= below * 0.9, w = side ? beside : below;
+    if (side) { f.classList.add('beside'); f.style.gridTemplateColumns = w + 'px minmax(0, 1fr)'; }
+    else info.style.maxWidth = w + 'px';
+    m.style.width = w + 'px'; m.style.height = (w / r) + 'px';
+    // Shrink the block to the demo so leftover height becomes even margins, not a gap under the demo.
+    f.style.flex = 'none'; f.style.height = (side ? w / r : w / r + 18 + info.offsetHeight) + 'px';
   }
   $('fImg').addEventListener('load', fit);
   addEventListener('resize', fit);
@@ -250,6 +266,7 @@
 
   function sync() {
     const max = row.scrollWidth - row.clientWidth;
+    document.querySelector('.nav').hidden = max <= 1;
     $('prev').disabled = row.scrollLeft <= 1;
     $('next').disabled = row.scrollLeft >= max - 1;
   }
