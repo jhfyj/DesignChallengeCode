@@ -34,9 +34,10 @@
     min-height: 100vh;
     background: var(--page);
   }
-  .side {
-    position: sticky; top: 0; height: 100vh; align-self: start;
-    background: var(--panel); border-right: 1px solid var(--line);
+  /* The panel runs the full height of the page; its contents stay pinned to the window. */
+  .side { background: var(--panel); border-right: 1px solid var(--line); }
+  .side-in {
+    position: sticky; top: 0; height: 100vh;
     display: flex; flex-direction: column; justify-content: space-between; gap: 32px;
     padding: 28px 26px;
   }
@@ -89,14 +90,22 @@
   .row.dragging .card { pointer-events: none; }
   .head-right { display: flex; align-items: center; gap: 12px; }
 
-  .nav { display: flex; gap: 6px; }
-  .nav button {
-    all: unset; cursor: pointer; width: 28px; height: 28px; display: grid; place-items: center;
-    border: 1px solid var(--line); border-radius: var(--r); color: var(--t1); font-size: 13px; transition: border-color .2s, color .2s, opacity .2s;
+  .nav { display: flex; }
+  /* Same control language as the portfolio's view toggle: a frosted pill
+     shell with a hairline edge, and a white plate under the active button. */
+  .nav {
+    padding: 4px; gap: 2px; border-radius: 15px;
+    background: rgba(240, 240, 244, .7);
+    box-shadow: inset 0 0 0 1px rgba(40, 40, 40, .08);
   }
-  .nav button:hover { border-color: var(--t1); }
-  .nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .nav button:disabled { opacity: .3; cursor: default; border-color: var(--line); }
+  .nav button {
+    all: unset; cursor: pointer; width: 30px; height: 26px; display: grid; place-items: center;
+    border-radius: 11px; color: var(--t1);
+    transition: background .25s, box-shadow .25s, color .25s, opacity .25s;
+  }
+  .nav button:hover:not(:disabled) { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); color: var(--accent); }
+  .nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .nav button:disabled { opacity: .3; cursor: default; }
 
 
   .card { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -115,7 +124,8 @@
 
   @media (max-width: 860px) {
     .site { grid-template-columns: 1fr; height: auto; min-height: 0; }
-    .side { position: static; height: auto; padding: 24px 20px; gap: 24px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .side { border-right: 0; border-bottom: 1px solid var(--line); }
+    .side-in { position: static; height: auto; padding: 24px 20px; gap: 24px; }
     .main { padding: 28px 20px; overflow: visible; }
     .feature-stage { height: auto; }
     .feature-media { position: relative; width: 100% !important; height: auto !important; }
@@ -128,7 +138,7 @@
   </head>
 <body>
 <div class="site" id="site">
-    <aside class="side">
+    <aside class="side"><div class="side-in">
       <a class="logo" href="https://hfyj-art.com/" aria-label="HFYJ"><svg viewBox="0 0 437 437" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="Logo V1 6" clip-path="url(#clip0_0_4)">
 <path id="Vector" d="M205.637 0.678933C206.176 0.754061 206.607 0.894324 207.038 0.894799C217.996 0.906883 228.953 0.904321 239.91 0.904321C240.363 0.904321 240.816 0.904321 241.332 0.904321C241.332 68.9159 241.332 136.811 241.332 204.793C209.292 204.793 177.259 204.793 145.12 204.793C145.12 179.619 145.12 154.47 145.12 129.235C128.878 129.235 112.742 129.235 96.4993 129.235C96.4993 154.413 96.4993 179.562 96.4993 204.795C64.361 204.795 32.3279 204.795 0.228764 204.795C0.228764 136.869 0.228764 68.9733 0.228764 0.904324C0.638913 0.904324 1.04497 0.904324 1.45102 0.904324C7.50849 0.904323 13.566 0.905614 19.6234 0.901528C20.0452 0.901243 20.4669 0.861035 20.9437 0.759163C23.2415 0.678934 25.4843 0.678934 27.8907 0.759163C28.2831 0.861004 28.512 0.901497 28.7409 0.901538C45.6006 0.904512 62.4603 0.905509 79.32 0.894921C79.6353 0.894723 79.9505 0.754058 80.2657 0.678933C82.5085 0.678934 84.7513 0.678934 87.1576 0.759164C90.3484 0.839395 93.3756 0.839395 96.5034 0.839395C96.5034 25.8506 96.5034 50.6232 96.5034 75.4211C112.744 75.4211 128.88 75.4211 145.119 75.4211C145.119 50.5625 145.119 25.7899 145.119 0.904321C145.675 0.904321 146.128 0.904321 146.581 0.904321C163.556 0.904321 180.531 0.905981 197.507 0.894886C197.938 0.894604 198.369 0.754061 198.8 0.678933C201.042 0.678934 203.285 0.678934 205.637 0.678933Z" fill="currentColor"/>
@@ -153,7 +163,7 @@
           <!-- X: add <li><a href="https://x.com/HANDLE">... once the profile link is known -->
           <li><a href="https://www.instagram.com/_hfyj_art/"><span>Instagram</span><span><svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></li>
         </ul>
-      </div>
+      </div></div>
     </aside>
 
     <main class="main">
