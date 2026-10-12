@@ -78,7 +78,8 @@
   /* Wide screens: the details sit beside the demo, so the demo can use the full height. */
   .feature.beside { grid-template-rows: minmax(0, 1fr); column-gap: 40px; }
   .feature.beside .feature-info { align-self: end; max-width: 340px; }
-  .feature.beside .feature-top { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .feature.beside .feature-top { display: contents; }
+  .feature.beside .actions { order: 1; margin-top: 6px; }
   .feature-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
   .feature-info h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
   .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5;  }
