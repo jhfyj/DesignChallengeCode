@@ -75,7 +75,7 @@
   .feature-media:hover .open, .feature-media:focus-visible .open { opacity: 1; transform: none; }
   .feature-media:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
   .feature-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  .feature-info .actions { margin-bottom: 4px; }
+  .feature-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
   .feature-info h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
   .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5;  }
   .actions { display: flex; gap: 18px; font-size: 14px; white-space: nowrap; }
@@ -167,10 +167,9 @@
     <main class="main">
       <section class="feature">
         <div class="feature-stage" id="fStage"><a class="feature-media" id="fMedia" href="#"><img id="fImg" alt=""><span class="open">Open demo <svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></div>
-        <div class="feature-info">
-          <p class="eyebrow" id="fNum"></p>
+        <div class="feature-info" id="fInfo">
+          <div class="feature-top"><p class="eyebrow" id="fNum"></p><div class="actions"><a class="primary" id="fOpen" href="#">Open demo</a><a id="fCode" href="#">Code</a></div></div>
           <h2 id="fTitle"></h2>
-          <div class="actions"><a class="primary" id="fOpen" href="#">Open demo</a><a id="fCode" href="#">Code</a></div>
           <p id="fText"></p>
         </div>
       </section>
@@ -220,11 +219,11 @@
   });
   // Size the featured box to the demo's own shape so nothing is cropped or letterboxed.
   function fit() {
-    const img = $('fImg'), st = $('fStage'), m = $('fMedia');
-    if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) { m.style.width = m.style.height = ''; return; }
+    const img = $('fImg'), st = $('fStage'), m = $('fMedia'), info = $('fInfo');
+    if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) { m.style.width = m.style.height = info.style.maxWidth = ''; return; }
     const r = img.naturalWidth / img.naturalHeight, W = st.clientWidth, H = innerHeight * 0.74;
     const w = Math.min(W, H * r);
-    m.style.width = w + 'px'; m.style.height = (w / r) + 'px';
+    m.style.width = info.style.maxWidth = w + 'px'; m.style.height = (w / r) + 'px';
   }
   $('fImg').addEventListener('load', fit);
   addEventListener('resize', fit);
