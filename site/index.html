@@ -57,7 +57,8 @@
   .links a span:last-child { display: flex; color: var(--t3); transition: transform .2s, color .2s; }
   .links a:hover span:last-child, .links a:focus-visible span:last-child { color: var(--accent); transform: translate(2px, -2px); }
 
-  .main { display: flex; flex-direction: column; justify-content: center; gap: 28px; padding: 32px 36px 32px; min-width: 0; height: 100vh; }
+  /* Anchored to the bottom so the last work title lines up with the last link on the left (35px = panel padding + link padding); spare height goes above the demo. */
+  .main { display: flex; flex-direction: column; justify-content: flex-end; gap: 28px; padding: 32px 36px 35px; min-width: 0; height: 100vh; }
   .eyebrow { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--t3); margin: 0; }
   .feature { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 18px; flex: 1; min-height: 0; }
   .feature-stage { min-width: 0; min-height: 0; position: relative; }
