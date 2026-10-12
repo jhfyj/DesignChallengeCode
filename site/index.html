@@ -51,6 +51,8 @@
     display: flex; justify-content: space-between; align-items: center;
     text-decoration: none; color: var(--t1); font-size: 14px; padding: 7px 0;
   }
+  .links a span:first-child { transition: color .2s; }
+  .links a:hover span:first-child, .links a:focus-visible span:first-child { color: var(--accent); }
   .links a span:last-child { display: flex; color: var(--t3); transition: transform .2s, color .2s; }
   .links a:hover span:last-child, .links a:focus-visible span:last-child { color: var(--accent); transform: translate(2px, -2px); }
 
