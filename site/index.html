@@ -106,7 +106,8 @@
   .nav button:disabled { opacity: .3; cursor: default; }
 
 
-  .card { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .card { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-width: 0; opacity: .5; transition: opacity .25s; }
+  .card[aria-current="true"], .card:hover, .card:focus-visible { opacity: 1; }
   .card .thumb { aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: var(--tile); position: relative; }
   .card .thumb img { padding: 0; }
   .card img { width: 100%; height: 100%; object-fit: contain; display: block; transition: filter .3s, opacity .3s; }
