@@ -5,167 +5,247 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weekly Design Challenge · Jennifer Huang</title>
     <meta name="description" content="One small interactive piece a week, designed and built in code by Jennifer Huang." />
-    <style>
-      :root {
-        --bg: #f6f3ec;
-        --ink: #1d1c1a;
-        --muted: #78736a;
-        --line: #dcd6ca;
-        --card: #fffdf8;
-      }
-      * { box-sizing: border-box; }
-      html { -webkit-text-size-adjust: 100%; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-weight: 300;
-        line-height: 1.5;
-      }
-      a { color: inherit; }
-      .wrap { max-width: 1120px; margin: 0 auto; padding: 72px 24px 96px; }
-      header { margin-bottom: 64px; max-width: 620px; }
-      .eyebrow {
-        font-size: 12px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin: 0 0 16px;
-      }
-      h1 {
-        font-weight: 300;
-        font-size: clamp(36px, 6vw, 64px);
-        line-height: 1.05;
-        letter-spacing: -0.02em;
-        margin: 0 0 20px;
-      }
-      header p { margin: 0; font-size: 18px; color: var(--muted); }
-      header p a { color: var(--ink); }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 40px 32px;
-      }
-      .card { display: flex; flex-direction: column; }
-      .thumb {
-        display: block;
-        aspect-ratio: 16 / 10;
-        border-radius: 10px;
-        overflow: hidden;
-        background: var(--card);
-        border: 1px solid var(--line);
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
-      }
-      .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .thumb:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(40, 32, 20, 0.12); }
-      .meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-        margin: 18px 0 6px;
-      }
-      .num { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-      h2 { font-weight: 400; font-size: 20px; margin: 0; letter-spacing: -0.01em; }
-      .card p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
-      .links { display: flex; gap: 18px; font-size: 14px; margin-top: auto; }
-      .links a { text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
-      .links a:hover { border-color: var(--ink); }
-      footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
-      @media (max-width: 480px) {
-        .wrap { padding: 48px 16px 64px; }
-        .grid { grid-template-columns: 1fr; }
-      }
-    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..700&display=swap">
+<style>
+  /* Layout: wireframe split, brand panel left (logo top, bio + links bottom), featured demo top right, row of all works beneath. */
+  :root {
+    color-scheme: light;
+    --page: #FCFCFE;
+    --panel: #F7F7F7;
+    --line: #E4E4E8;
+    --t1: #282828;
+    --t2: #6b6b6b;
+    --t3: #a8a8ac;
+    --accent: #5E81E2;
+    --tile: #EDEDEF;
+    --r: 3px;
+    --display: "DM Sans", system-ui, sans-serif;
+    --body: "DM Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--t1); font-family: var(--body); }
+
+
+  /* ---------- the page ---------- */
+  .site {
+    display: grid; grid-template-columns: 264px minmax(0, 1fr);
+    min-height: 100vh;
+    background: var(--page);
+  }
+  .side {
+    position: sticky; top: 0; height: 100vh; align-self: start;
+    background: var(--panel); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 32px;
+    padding: 28px 26px;
+  }
+  .logo { width: 64px; height: 64px; color: var(--accent); display: block; }
+  .logo svg { width: 100%; height: 100%; display: block; }
+  .bio { display: flex; flex-direction: column; gap: 8px; }
+  .bio .links { margin-top: 18px; }
+  .bio h1 { font-family: var(--display); font-weight: 600; font-size: 22px; letter-spacing: -0.01em; margin: 0; line-height: 1.15; }
+  .bio p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--t2); max-width: 30ch; }
+  .links { list-style: none; margin: 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: grid; gap: 2px; }
+  .links a {
+    display: flex; justify-content: space-between; align-items: center;
+    text-decoration: none; color: var(--t1); font-size: 14px; padding: 7px 0;
+  }
+  .links a span:last-child { display: flex; color: var(--t3); transition: transform .2s, color .2s; }
+  .links a:hover span:last-child, .links a:focus-visible span:last-child { color: var(--accent); transform: translate(2px, -2px); }
+
+  .main { display: flex; flex-direction: column; gap: 28px; padding: 32px 36px 32px; min-width: 0; }
+  .eyebrow { font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--t3); margin: 0; }
+  .feature { display: grid; gap: 18px; }
+  .feature-stage { min-width: 0; position: relative; }
+  .feature-media {
+    position: relative; display: block; max-width: 100%; border-radius: var(--r); overflow: hidden; background: var(--tile);
+    outline: none;
+  }
+  .feature-media img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+  .feature-media:hover img { transform: scale(1.01); }
+  .feature-media .open {
+    position: absolute; right: 14px; bottom: 14px; background: var(--page); color: var(--t1);
+    font-size: 13px; padding: 7px 12px; border-radius: var(--r); display: flex; gap: 8px; align-items: center;
+    opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s;
+  }
+  .feature-media:hover .open, .feature-media:focus-visible .open { opacity: 1; transform: none; }
+  .feature-media:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+  .feature-info { display: grid; grid-template-columns: minmax(180px, auto) minmax(0, 1fr) auto; align-items: baseline; gap: 6px 32px; min-width: 0; }
+  .feature-info .eyebrow { grid-column: 1 / -1; }
+  .feature-info h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+  .feature-info p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.5; max-width: 60ch; }
+  .actions { display: flex; gap: 18px; font-size: 14px; white-space: nowrap; }
+  .actions a { color: var(--t1); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+  .actions a.primary { color: var(--accent); border-color: currentColor; }
+
+  .works { display: flex; flex-direction: column; gap: 14px; }
+  .works-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(132px, 1fr); gap: 14px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .row::-webkit-scrollbar { display: none; }
+  .row.dragging { cursor: grabbing; }
+  .row.dragging .card { pointer-events: none; }
+  .head-right { display: flex; align-items: center; gap: 12px; }
+
+  .nav { display: flex; gap: 6px; }
+  .nav button {
+    all: unset; cursor: pointer; width: 28px; height: 28px; display: grid; place-items: center;
+    border: 1px solid var(--line); border-radius: var(--r); color: var(--t1); font-size: 13px; transition: border-color .2s, color .2s, opacity .2s;
+  }
+  .nav button:hover { border-color: var(--t1); }
+  .nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .nav button:disabled { opacity: .3; cursor: default; border-color: var(--line); }
+
+
+  .card { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .card .thumb { aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: var(--tile); position: relative; }
+  .card .thumb img { padding: 0; }
+  .card img { width: 100%; height: 100%; object-fit: contain; display: block; transition: filter .3s, opacity .3s; }
+  .card .cap { display: flex; flex-direction: column; gap: 1px; }
+  .card .n { font-family: var(--display); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--t3); }
+  .card .t { font-size: 13px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card[aria-current="true"] .t { color: var(--t1); }
+  .card[aria-current="true"] .n { color: var(--accent); }
+  .card .thumb::after { content: ""; position: absolute; inset: 0; border-radius: var(--r); box-shadow: inset 0 0 0 0 var(--accent); transition: box-shadow .2s; }
+  .card[aria-current="true"] .thumb::after { box-shadow: inset 0 0 0 2px var(--accent); }
+  .card:focus-visible .thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+
+  @media (max-width: 860px) {
+    .site { grid-template-columns: 1fr; height: auto; min-height: 0; }
+    .side { position: static; height: auto; padding: 24px 20px; gap: 24px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .main { padding: 28px 20px; overflow: visible; }
+    .feature-info { grid-template-columns: 1fr; }
+    .feature-stage { height: auto; }
+    .feature-media { position: relative; width: 100% !important; height: auto !important; }
+    .feature-media img { height: auto; }
+    .row { grid-auto-columns: 140px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
   </head>
-  <body>
-    <div class="wrap">
-      <header>
-        <p class="eyebrow">Jennifer Huang</p>
-        <h1>Weekly Design Challenge</h1>
-        <p>One small interactive piece a week, designed and built in code. Click any project to play with it in your browser, or browse the source on <a href="https://github.com/jhfyj/DesignChallengeCode">GitHub</a>.</p>
-      </header>
+<body>
+<div class="site" id="site">
+    <aside class="side">
+      <a class="logo" href="https://hfyj-art.com/" aria-label="HFYJ"><svg viewBox="0 0 437 437" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Logo V1 6" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M205.637 0.678933C206.176 0.754061 206.607 0.894324 207.038 0.894799C217.996 0.906883 228.953 0.904321 239.91 0.904321C240.363 0.904321 240.816 0.904321 241.332 0.904321C241.332 68.9159 241.332 136.811 241.332 204.793C209.292 204.793 177.259 204.793 145.12 204.793C145.12 179.619 145.12 154.47 145.12 129.235C128.878 129.235 112.742 129.235 96.4993 129.235C96.4993 154.413 96.4993 179.562 96.4993 204.795C64.361 204.795 32.3279 204.795 0.228764 204.795C0.228764 136.869 0.228764 68.9733 0.228764 0.904324C0.638913 0.904324 1.04497 0.904324 1.45102 0.904324C7.50849 0.904323 13.566 0.905614 19.6234 0.901528C20.0452 0.901243 20.4669 0.861035 20.9437 0.759163C23.2415 0.678934 25.4843 0.678934 27.8907 0.759163C28.2831 0.861004 28.512 0.901497 28.7409 0.901538C45.6006 0.904512 62.4603 0.905509 79.32 0.894921C79.6353 0.894723 79.9505 0.754058 80.2657 0.678933C82.5085 0.678934 84.7513 0.678934 87.1576 0.759164C90.3484 0.839395 93.3756 0.839395 96.5034 0.839395C96.5034 25.8506 96.5034 50.6232 96.5034 75.4211C112.744 75.4211 128.88 75.4211 145.119 75.4211C145.119 50.5625 145.119 25.7899 145.119 0.904321C145.675 0.904321 146.128 0.904321 146.581 0.904321C163.556 0.904321 180.531 0.905981 197.507 0.894886C197.938 0.894604 198.369 0.754061 198.8 0.678933C201.042 0.678934 203.285 0.678934 205.637 0.678933Z" fill="currentColor"/>
+<path id="Vector_2" d="M324.756 437.243C325.875 437.302 326.984 437.529 328.206 437.68C330.636 437.68 332.959 437.68 335.336 437.599C336.997 437.422 338.603 437.322 340.21 437.23C344.187 437.002 348.169 436.829 352.141 436.537C355.145 436.315 358.169 436.115 361.128 435.6C366.4 434.684 371.664 433.678 376.867 432.452C383.209 430.957 389.322 428.769 395.207 425.995C401.141 423.198 406.705 419.87 411.776 415.735C415.235 412.915 418.289 409.764 421.04 406.306C424.186 402.349 426.776 398.066 428.773 393.468C429.956 390.744 431.001 387.949 431.89 385.121C433.407 380.301 434.492 375.378 434.942 370.343C435.266 366.714 435.812 363.082 435.817 359.451C435.875 310.574 435.856 261.697 435.856 212.82V211.645H248.471V274.283H355.621C355.642 274.636 355.673 274.891 355.672 275.147C355.597 302.785 355.509 326.313 355.455 353.951C355.448 357.581 355.031 359.776 354.04 363.266C352.686 368.029 350.268 372.063 345.821 374.791C341.715 377.309 337.161 378.248 332.451 378.512C327.616 378.784 322.823 378.38 318.205 376.745C312.626 374.77 308.788 371.132 306.748 365.685C305.985 363.899 304.46 358.954 304.46 353.457H229.003C229.203 357.353 229.313 361.16 229.617 364.951C229.884 368.276 230.309 371.592 230.769 374.899C231.668 381.359 233.553 387.575 236.264 393.513C240.179 402.084 245.646 409.57 253.122 415.625C257.19 418.919 261.531 421.782 266.171 424.221C272.267 427.425 278.689 429.879 285.339 431.75C294.73 434.392 304.344 435.896 314.062 436.75C317.613 437.062 321.193 437.054 324.756 437.243Z" fill="currentColor"/>
+<path id="Vector_3" d="M1.59867 211.745C33.6047 211.67 65.6108 211.675 97.6168 211.647C98.6835 211.647 99.1594 211.908 99.4951 212.983C101.968 220.901 104.531 228.791 107.06 236.692C108.833 242.229 110.601 247.768 112.363 253.308C114.687 260.613 117.005 267.92 119.319 275.228C120.459 278.829 121.573 282.438 122.74 286.03C122.853 286.378 123.255 286.634 123.523 286.933C123.756 286.621 124.102 286.342 124.207 285.992C126.136 279.579 128.05 273.161 129.94 266.736C131.987 259.78 133.995 252.813 136.043 245.857C137.777 239.965 139.558 234.086 141.294 228.194C142.811 223.049 144.296 217.895 145.791 212.743C145.994 212.047 146.268 211.644 147.173 211.644C178.346 211.675 209.52 211.67 240.694 211.671C240.844 211.671 240.995 211.686 241.332 211.703C240.449 213.378 239.63 214.985 238.76 216.565C237.219 219.367 235.64 222.148 234.088 224.944C231.147 230.244 228.206 235.545 225.28 240.853C223.735 243.655 222.234 246.48 220.689 249.282C217.762 254.59 214.812 259.886 211.883 265.193C209.977 268.645 208.098 272.111 206.193 275.564C203.248 280.904 200.284 286.234 197.343 291.577C195.351 295.195 193.398 298.833 191.406 302.45C188.482 307.759 185.532 313.055 182.605 318.363C180.684 321.848 178.794 325.351 176.871 328.836C173.943 334.144 170.997 339.441 168.064 344.746C167.074 346.537 166.07 348.321 165.143 350.143C164.904 350.613 164.848 351.217 164.847 351.759C164.834 380.337 164.835 408.916 164.835 437.6C135.695 437.705 106.554 437.705 77.307 437.6C77.2763 432.249 77.352 427.005 77.4277 421.76C77.5033 416.515 77.5807 411.271 77.654 406.026C77.732 400.444 77.8046 394.861 77.8821 389.278C77.956 383.959 78.0369 378.639 78.1076 373.319C78.1878 367.286 78.2656 361.253 78.3326 355.22C78.3534 353.342 78.3119 351.464 78.3447 349.587C78.3646 348.452 78.1811 347.453 77.5737 346.413C75.1747 342.304 72.9275 338.108 70.5857 333.965C66.9456 327.527 63.2615 321.112 59.6209 314.674C57.2786 310.532 54.9985 306.355 52.6589 302.211C49.3149 296.288 45.9309 290.387 42.5849 284.465C39.9515 279.804 37.365 275.117 34.7304 270.457C31.0905 264.019 27.4116 257.602 23.7748 251.162C21.0507 246.338 18.3801 241.485 15.6616 236.658C11.8491 229.889 8.02222 223.128 4.18245 216.374C3.36314 214.933 2.46207 213.537 1.59867 212.121C1.59867 212.021 1.59867 211.921 1.59867 211.745Z" fill="currentColor"/>
+<path id="Vector_4" d="M437.229 49.6487C431.869 49.7542 426.51 49.7765 421.15 49.7497C409.066 49.6891 396.982 49.6052 384.897 49.5287C373.273 49.4552 361.648 49.3843 350.023 49.3023C340.542 49.2354 331.061 49.1538 321.58 49.0793C321.128 49.0758 320.677 49.0789 320.154 49.0789C320.125 49.4972 320.083 49.8223 320.082 50.1476C320.076 52.2485 320.065 54.3496 320.082 56.4505C320.152 65.1794 320.246 73.9082 320.293 82.6373C320.298 83.7399 320.736 83.9936 321.802 83.9928C354.61 83.9671 387.418 83.9718 420.225 83.9718C420.715 83.9718 421.204 83.9718 421.766 83.9718C421.766 101.387 421.766 118.702 421.766 136.198C421.298 136.198 420.819 136.205 420.341 136.198C415.416 136.124 410.491 136.047 405.565 135.974C400.295 135.897 395.025 135.829 389.755 135.746C385.557 135.68 381.359 135.587 377.16 135.526C371.278 135.44 365.395 135.377 359.513 135.297C354.472 135.228 349.432 135.148 344.392 135.073C339.236 134.997 334.081 134.945 328.926 134.838C326.418 134.786 323.912 134.633 321.344 134.522C321.344 136.398 321.338 138.101 321.349 139.803C321.351 140.097 321.448 140.39 321.453 140.685C321.536 144.986 321.591 149.289 321.692 153.59C321.825 159.23 322.036 164.869 322.136 170.51C322.258 177.362 322.29 184.216 322.38 191.069C322.437 195.371 322.53 199.673 322.603 203.974C322.608 204.228 322.574 204.482 322.554 204.795C297.776 204.795 273.064 204.795 248.182 204.795C248.182 136.818 248.182 68.8539 248.182 0.784435C311.171 0.678933 374.16 0.678933 437.229 0.678933C437.229 16.9669 437.229 33.2551 437.229 49.6487Z" fill="currentColor"/>
+<path id="Vector_5" d="M117.806 252.787C117.41 251.376 117.053 250.052 116.671 248.632C121.303 248.632 125.755 248.632 130.37 248.632C129.924 250.502 129.515 252.28 129.075 254.05C127.566 260.123 126.053 266.195 124.516 272.26C124.421 272.635 124.101 272.948 123.886 273.29C123.584 272.968 123.113 272.696 123.007 272.315C122 268.708 121.051 265.084 120.094 261.462C119.338 258.6 118.594 255.736 117.806 252.787Z" fill="currentColor"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="437" height="437"/>
+</clipPath>
+</defs>
+</svg>
+</a>
+      <div class="bio">
+        <h1>Jennifer Huang</h1>
+        <p>Product designer who creates with intentionality, playfulness, and the desire to challenge. Each week I design and build one small interactive piece in code.</p>
+        <ul class="links">
+          <li><a href="https://hfyj-art.com/"><span>Portfolio</span><span><svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></li>
+          <li><a href="https://www.linkedin.com/in/jennifer-huang-30a8b3246/"><span>LinkedIn</span><span><svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></li>
+          <!-- X: add <li><a href="https://x.com/HANDLE">... once the profile link is known -->
+          <li><a href="https://www.instagram.com/_hfyj_art/"><span>Instagram</span><span><svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></li>
+        </ul>
+      </div>
+    </aside>
 
-      <main class="grid" id="projects"></main>
+    <main class="main">
+      <section class="feature">
+        <div class="feature-stage" id="fStage"><a class="feature-media" id="fMedia" href="#"><img id="fImg" alt=""><span class="open">Open demo <svg width="14" height="14" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M10 6L10 8 22.59 8 6 24.59 7.41 26 24 9.41 24 22 26 22 26 6 10 6z"/></svg></span></a></div>
+        <div class="feature-info">
+          <p class="eyebrow" id="fNum"></p>
+          <h2 id="fTitle"></h2>
+          <p id="fText"></p>
+          <div class="actions"><a class="primary" id="fOpen" href="#">Open demo</a><a id="fCode" href="#">Code</a></div>
+        </div>
+      </section>
+      <section class="works" id="works">
+        <div class="works-head"><p class="eyebrow">All works</p>
+          <div class="head-right">
+            <div class="nav"><button type="button" id="prev" aria-label="Previous works"><svg width="16" height="16" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M6.7 12.3L2.9 8.5 15 8.5 15 7.5 2.9 7.5 6.7 3.7 6 3 1 8 6 13z"/></svg></button><button type="button" id="next" aria-label="Next works"><svg width="16" height="16" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M9.3 3.7L13.1 7.5 1 7.5 1 8.5 13.1 8.5 9.3 12.3 10 13 15 8 10 3z"/></svg></button></div>
+          </div>
+        </div>
+        <div class="row" id="row"></div>
+      </section>
+    </main>
+  </div>
 
-      <footer>Built with React and Vite. Best viewed on a laptop or desktop.</footer>
-    </div>
+<script>
+  // Add a new week here: folder = the name under weeks/, media = a file in docs/media/.
+  const PROJECTS = [
+    { num: 'Week 01', title: 'Night Market Ticket', folder: 'week-01-react', media: 'week-01-react.gif', text: 'A ticket you tear along the perforation, with sound that follows how fast you drag.' },
+    { num: 'Week 02', title: 'Event Poster Kit', folder: 'week-02-react', media: 'week-02-react.gif', text: 'A grid-based poster generator for tech@nyu events. Shuffle for a new layout, lock what you like, export.' },
+    { num: 'Week 03', title: 'Round Watch Assistant', folder: 'week-03-react', media: 'week-03-react.jpg', text: 'A voice assistant for a round watch face. Hold the mic, watch the rim listen, think and answer.' },
+    { num: 'Week 04', title: 'Since When Was the Last Time You Had Some Fun?', folder: 'week-04-react', media: 'week-04-react.gif', text: 'A desktop that lifts away onto a playmat of colourful foam tiles.' },
+    { num: 'Week 05', title: 'Graph Paper Corridor', folder: 'week-05-react', media: 'week-05-react.gif', text: 'Scroll through a hole in graph paper into a 3D corridor drawn entirely in grid lines.' },
+    { num: 'Week 06', title: 'World Clock', folder: 'week-06-react', media: 'week-06-react.gif', text: 'Photos of cities redrawn as dots, lit by each place’s real local time.' },
+    { num: 'Side project', title: 'Activity Log', folder: 'random-week-06-react', media: 'random-week-06-react.jpg', text: 'An endless history of past tasks on a phone. Scrub the tick rail, rest on one to open it.' },
+  ];
+  const LIVE = './';
+  const REPO = 'https://github.com/jhfyj/DesignChallengeCode/tree/main/weeks/';
+  const $ = (id) => document.getElementById(id);
+  const row = $('row');
 
-    <script>
-      // Add a new week here: folder = the name under weeks/, media = a file in docs/media/.
-      const PROJECTS = [
-        {
-          num: 'Week 01',
-          title: 'Night Market Ticket',
-          folder: 'week-01-react',
-          media: 'week-01-react.gif',
-          text: 'A ticket you tear along the perforation, with sound that follows how fast you drag.',
-        },
-        {
-          num: 'Week 02',
-          title: 'Event Poster Kit',
-          folder: 'week-02-react',
-          media: 'week-02-react.gif',
-          text: 'A grid-based poster generator for tech@nyu events. Shuffle for a new layout, lock what you like, export.',
-        },
-        {
-          num: 'Week 03',
-          title: 'Round Watch Assistant',
-          folder: 'week-03-react',
-          media: 'week-03-react.jpg',
-          text: 'A voice assistant for a round watch face. Hold the mic, watch the rim listen, think and answer.',
-        },
-        {
-          num: 'Week 04',
-          title: 'Since When Was the Last Time You Had Some Fun?',
-          folder: 'week-04-react',
-          media: 'week-04-react.gif',
-          text: 'A desktop that lifts away onto a playmat of colourful foam tiles.',
-        },
-        {
-          num: 'Week 05',
-          title: 'Graph Paper Corridor',
-          folder: 'week-05-react',
-          media: 'week-05-react.gif',
-          text: 'Scroll through a hole in graph paper into a 3D corridor drawn entirely in grid lines.',
-        },
-        {
-          num: 'Week 06',
-          title: 'World Clock',
-          folder: 'week-06-react',
-          media: 'week-06-react.gif',
-          text: 'Photos of cities redrawn as dots, lit by each place’s real local time.',
-        },
-        {
-          num: 'Side project',
-          title: 'Activity Log',
-          folder: 'random-week-06-react',
-          media: 'random-week-06-react.jpg',
-          text: 'An endless history of past tasks on a phone. Scrub the tick rail, rest on one to open it.',
-        },
-      ];
+  function feature(i) {
+    const p = PROJECTS[i];
+    $('fImg').src = './media/' + p.media; $('fImg').alt = p.title;
+    $('fNum').textContent = p.num; $('fTitle').textContent = p.title; $('fText').textContent = p.text;
+    $('fMedia').href = $('fOpen').href = LIVE + p.folder + '/';
+    $('fCode').href = REPO + p.folder;
+    row.querySelectorAll('.card').forEach((c, j) => c.setAttribute('aria-current', j === i ? 'true' : 'false'));
+  }
+  PROJECTS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'card';
+    b.innerHTML = '<span class="thumb"><img loading="lazy" alt=""></span><span class="cap"><span class="n"></span><span class="t"></span></span>';
+    b.querySelector('img').src = './media/' + p.media;
+    b.querySelector('.n').textContent = p.num; b.querySelector('.t').textContent = p.title;
+    b.addEventListener('click', () => feature(i));
+    row.appendChild(b);
+  });
+  // Size the featured box to the demo's own shape so nothing is cropped or letterboxed.
+  function fit() {
+    const img = $('fImg'), st = $('fStage'), m = $('fMedia');
+    if (!img.naturalWidth || matchMedia('(max-width: 860px)').matches) { m.style.width = m.style.height = ''; return; }
+    const r = img.naturalWidth / img.naturalHeight, W = st.clientWidth, H = innerHeight * 0.74;
+    const w = Math.min(W, H * r);
+    m.style.width = w + 'px'; m.style.height = (w / r) + 'px';
+  }
+  $('fImg').addEventListener('load', fit);
+  addEventListener('resize', fit);
+  feature(5);
 
-      const REPO = 'https://github.com/jhfyj/DesignChallengeCode/tree/main/weeks/';
-      const grid = document.getElementById('projects');
-      for (const p of PROJECTS) {
-        const card = document.createElement('article');
-        card.className = 'card';
-        card.innerHTML = `
-          <a class="thumb" href="./${p.folder}/"><img loading="lazy" alt=""></a>
-          <div class="meta"><h2></h2><span class="num"></span></div>
-          <p></p>
-          <div class="links">
-            <a href="./${p.folder}/">Open demo →</a>
-            <a href="${REPO}${p.folder}">Code</a>
-          </div>`;
-        card.querySelector('img').src = `./media/${p.media}`;
-        card.querySelector('img').alt = p.title;
-        card.querySelector('h2').textContent = p.title;
-        card.querySelector('.num').textContent = p.num;
-        card.querySelector('p').textContent = p.text;
-        grid.appendChild(card);
-      }
-    </script>
-  </body>
+  // Row scrolling: arrows step two works, the wheel scrolls sideways, and you can drag the row.
+  const step = () => (row.querySelector('.card')?.offsetWidth || 150) + 14;
+  $('prev').onclick = () => row.scrollBy({ left: -step() * 2, behavior: 'smooth' });
+  $('next').onclick = () => row.scrollBy({ left: step() * 2, behavior: 'smooth' });
+  row.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && row.scrollWidth > row.clientWidth) { e.preventDefault(); row.scrollLeft += e.deltaY; }
+  }, { passive: false });
+  let drag = null;
+  row.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') drag = { x: e.clientX, l: row.scrollLeft, moved: false }; });
+  addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 4) { drag.moved = true; row.classList.add('dragging'); }
+    if (drag.moved) row.scrollLeft = drag.l - dx;
+  });
+  addEventListener('pointerup', () => { drag = null; setTimeout(() => row.classList.remove('dragging'), 0); });
+
+  function sync() {
+    const max = row.scrollWidth - row.clientWidth;
+    $('prev').disabled = row.scrollLeft <= 1;
+    $('next').disabled = row.scrollLeft >= max - 1;
+  }
+  row.addEventListener('scroll', sync);
+  addEventListener('resize', sync);
+  setTimeout(sync, 50);
+</script>
+</body>
 </html>
